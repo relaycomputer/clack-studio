@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"runtime"
 	"time"
 
 	"clack-studio/pkg/emulator"
@@ -27,9 +29,24 @@ type Server struct {
 	machine *emulator.Machine
 }
 
+func openBrowser(url string) {
+	time.Sleep(300 * time.Millisecond) // Give server a moment to bind
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	default:
+		cmd = exec.Command("xdg-open", url)
+	}
+	_ = cmd.Start()
+}
+
 func main() {
 	port := flag.Int("port", 8080, "HTTP server port")
 	loadPath := flag.String("load", "", "Optional path to daten[...] file to load at startup")
+	autoOpen := flag.Bool("open", true, "Open default browser automatically on startup")
 	flag.Parse()
 
 	m := emulator.NewMachine()
@@ -65,11 +82,16 @@ func main() {
 	}
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
 
+	url := fmt.Sprintf("http://localhost:%d", *port)
 	addr := fmt.Sprintf("0.0.0.0:%d", *port)
 	fmt.Println("==================================================================")
 	fmt.Printf("⚡ CLACK-STUDIO: 16-Bit Relay Computer Simulator & Lab\n")
-	fmt.Printf("⚡ Server running on: http://localhost:%d\n", *port)
+	fmt.Printf("⚡ Server running on: %s\n", url)
 	fmt.Println("==================================================================")
+
+	if *autoOpen {
+		go openBrowser(url)
+	}
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("Server failed: %v", err)
