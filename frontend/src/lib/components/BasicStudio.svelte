@@ -332,6 +332,7 @@ LOOP:
 
   onMount(() => {
     initEditor();
+    compileBasic(true);
   });
 </script>
 

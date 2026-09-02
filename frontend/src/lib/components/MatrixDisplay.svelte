@@ -4,6 +4,7 @@
   import { settings } from '../stores/settingsStore.svelte.js';
 
   let canvas = $state(null);
+  let animId = null;
 
   function render() {
     if (!canvas) return;
@@ -12,28 +13,28 @@
     const h = canvas.height;
     const res = settings.matrixResolution;
     const dotSize = w / res;
-    const radius = (dotSize / 2) * 0.78;
+    const radius = Math.max(1, (dotSize / 2) * 0.78);
 
     ctx.fillStyle = '#060a0f';
     ctx.fillRect(0, 0, w, h);
 
-    // Get active theme colors
+    // Theme color configuration
     let onColor = '#ffc433';
-    let glowColor = 'rgba(255, 176, 0, 0.5)';
-    let offColor = '#1a1300';
+    let glowColor = 'rgba(255, 176, 0, 0.6)';
+    let offColor = '#161100';
 
     if (settings.theme === 'theme-green') {
       onColor = '#33ff85';
-      glowColor = 'rgba(0, 255, 102, 0.5)';
-      offColor = '#00260f';
+      glowColor = 'rgba(0, 255, 102, 0.6)';
+      offColor = '#001a0a';
     } else if (settings.theme === 'theme-cyan') {
       onColor = '#33dcff';
-      glowColor = 'rgba(0, 212, 255, 0.5)';
-      offColor = '#002026';
+      glowColor = 'rgba(0, 212, 255, 0.6)';
+      offColor = '#00141a';
     } else if (settings.theme === 'theme-ruby') {
       onColor = '#ff5c77';
-      glowColor = 'rgba(255, 51, 85, 0.5)';
-      offColor = '#26060c';
+      glowColor = 'rgba(255, 51, 85, 0.6)';
+      offColor = '#1a0408';
     }
 
     if (res === 64) {
@@ -41,7 +42,7 @@
       for (let y = 0; y < 64; y++) {
         for (let wordOffset = 0; wordOffset < 4; wordOffset++) {
           const currentWordAddr = FRAMEBUFFER_64_START + (y * 4) + wordOffset;
-          const word = currentWordAddr < cpu.memory.length ? cpu.memory[currentWordAddr] : 0;
+          const word = (currentWordAddr < cpu.memory.length) ? cpu.memory[currentWordAddr] : 0;
 
           for (let bit = 15; bit >= 0; bit--) {
             const x = (wordOffset * 16) + (15 - bit);
@@ -71,7 +72,7 @@
       for (let y = 0; y < 32; y++) {
         for (let wordOffset = 0; wordOffset < 2; wordOffset++) {
           const currentWordAddr = FRAMEBUFFER_32_START + (y * 2) + wordOffset;
-          const word = currentWordAddr < cpu.memory.length ? cpu.memory[currentWordAddr] : 0;
+          const word = (currentWordAddr < cpu.memory.length) ? cpu.memory[currentWordAddr] : 0;
 
           for (let bit = 15; bit >= 0; bit--) {
             const x = (wordOffset * 16) + (15 - bit);
@@ -99,18 +100,17 @@
     }
   }
 
-  // Reactive redraw on memory or settings changes
-  $effect(() => {
-    // Track dependencies
-    const _theme = settings.theme;
-    const _res = settings.matrixResolution;
-    const _cycles = cpu.cycles;
-    const _mem = cpu.memory;
-    render();
-  });
-
   onMount(() => {
-    render();
+    // Continuous 60 FPS render loop for rock-solid visual updates
+    function loop() {
+      render();
+      animId = requestAnimationFrame(loop);
+    }
+    loop();
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
   });
 </script>
 
