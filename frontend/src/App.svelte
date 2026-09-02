@@ -15,7 +15,7 @@
 <div class="chassis">
   <HeaderBar />
 
-  <main class="workbench-grid">
+  <main class="main-grid">
     <!-- Left Column: Matrix Display & Frontpanel -->
     <section class="left-column">
       <MatrixDisplay />

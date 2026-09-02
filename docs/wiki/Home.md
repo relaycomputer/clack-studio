@@ -1,15 +1,28 @@
-# ⚡ Clack-Studio — Visual Hardware Lab & Emulator Wiki
+# ⚡ CLACK-STUDIO Wiki
+**16-Bit Relay Computer Visual Hardware Lab & Emulator (Svelte 5 + Go)**
 
-Herzlich willkommen im Wiki von **Clack-Studio**!
-
-Clack-Studio ist die zentrale grafische Simulations- und Debugging-Umgebung für den 16-Bit Relaisrechner.
+Willkommen im offiziellen Wiki von **Clack-Studio**!
 
 ---
 
-## 🗺️ Wiki-Navigation
+## 📖 Inhaltsverzeichnis
 
-* 📌 **[Home](Home)** — Überblick & Schnelleinstieg
-* 🎛️ **[Hardware-Frontpanel & Register](Hardware-Frontpanel-und-Register)** — Erklärung aller 6 Register-LED-Leisten, Busse, Bit-Skala & Statuslampen
-* 🟢 **[LED-Matrix Display (64x64)](LED-Matrix-Display)** — Memory-Mapped Framebuffer ab RAM `0x0300`, Pixelmodi & Farbschemata
-* 💻 **[Multi-Tab Workstation](Multi-Tab-Workstation)** — Code-Editor, Format-Konverter, Live-Disassembler, 1024-Wort RAM Heatmap & Logic Analyzer
-* ⚡ **[Relais-Akustik](Relais-Akustik)** — Mechanische Klack-Klangerzeugung über WebAudio
+1. [🏛️ Architektur, Svelte 5 & Go Single-Binary](Architektur-und-Svelte5)
+2. [🎛️ Hardware-Frontpanel, Register & Bus-LEDs](Hardware-Frontpanel-und-Register)
+3. [🎨 32x32 & 64x64 LED-Matrix Display](LED-Matrix-Display)
+4. [🚀 Arduino-Flasher, Auto-Port-Erkennung & Web-Serial](Arduino-Flasher-und-WebSerial)
+
+---
+
+## 🚀 Schnellstart
+
+```bash
+cd clack-studio
+
+# Starten auf Port 8080:
+./bin/clack-studio
+
+# Oder mit Go direkt:
+go run . -port 8080
+```
+Öffne **`http://localhost:8080`** im Browser.
