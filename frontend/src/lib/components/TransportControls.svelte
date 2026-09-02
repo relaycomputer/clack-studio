@@ -2,18 +2,27 @@
   import { cpu } from '../stores/cpuStore.svelte.js';
   import { settings } from '../stores/settingsStore.svelte.js';
 
-  let speedText = $derived(
-    settings.speedHz >= 500 ? 'MAX SPEED (Echtzeit)' :
-    settings.speedHz <= 5 ? `${settings.speedHz} Hz (~${Math.round(1000/settings.speedHz)}ms Relais-Takt)` :
-    `${settings.speedHz} Hz (~${Math.round(1000/settings.speedHz)}ms)`
-  );
+  // Tactile speed presets:
+  const SPEED_PRESETS = [
+    { hz: 1, label: '1 Hz (1s Relais)' },
+    { hz: 5, label: '5 Hz (200ms)' },
+    { hz: 20, label: '20 Hz (50ms)' },
+    { hz: 100, label: '100 Hz (10ms)' },
+    { hz: 500, label: 'MAX (Echtzeit)' }
+  ];
 
-  function handleSpeedInput(e) {
-    const val = parseInt(e.target.value, 10);
-    if (val === 100) {
-      settings.setSpeed(500);
-    } else {
-      settings.setSpeed(val);
+  let currentStep = $derived.by(() => {
+    if (settings.speedHz >= 500) return 4;
+    if (settings.speedHz >= 100) return 3;
+    if (settings.speedHz >= 20) return 2;
+    if (settings.speedHz >= 5) return 1;
+    return 0;
+  });
+
+  function handleSliderChange(e) {
+    const idx = parseInt(e.target.value, 10);
+    if (idx >= 0 && idx < SPEED_PRESETS.length) {
+      settings.setSpeed(SPEED_PRESETS[idx].hz);
     }
   }
 </script>
@@ -55,15 +64,16 @@
   </div>
 
   <div class="speed-control">
-    <label for="slider-speed">Taktfrequenz:</label>
+    <label for="slider-speed">Takt:</label>
     <input 
       type="range" 
       id="slider-speed" 
-      min="1" 
-      max="100" 
-      value={settings.speedHz >= 500 ? 100 : settings.speedHz}
-      oninput={handleSpeedInput}
+      min="0" 
+      max="4" 
+      step="1"
+      value={currentStep}
+      oninput={handleSliderChange}
     />
-    <span class="speed-val">{speedText}</span>
+    <span class="speed-val">{SPEED_PRESETS[currentStep].label}</span>
   </div>
 </div>

@@ -19,23 +19,23 @@
   </div>
   
   <div class="header-metrics">
-    <div class="metric-card">
+    <div class="metric-card card-pc">
       <span class="label">PC</span>
       <span class="value">{hexPC}</span>
     </div>
-    <div class="metric-card highlight">
+    <div class="metric-card card-accu highlight">
       <span class="label">ACCU</span>
       <span class="value">{hexAccu} <small>({signedAccu})</small></span>
     </div>
-    <div class="metric-card">
+    <div class="metric-card card-stack">
       <span class="label">STACK</span>
       <span class="value">{hexStack}</span>
     </div>
-    <div class="metric-card">
+    <div class="metric-card card-cycles">
       <span class="label">CYCLES</span>
       <span class="value">{cpu.cycles}</span>
     </div>
-    <div class="metric-card">
+    <div class="metric-card card-time">
       <span class="label">RELAY TIME</span>
       <span class="value">{relayTimeSec} s</span>
     </div>

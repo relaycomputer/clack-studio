@@ -151,20 +151,30 @@ html, body {
 
 .header-metrics {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 .metric-card {
   background: #0d131c;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 65px;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
+
+.metric-card.card-pc { width: 88px; }
+.metric-card.card-accu { width: 148px; }
+.metric-card.card-stack { width: 88px; }
+.metric-card.card-cycles { width: 98px; }
+.metric-card.card-time { width: 108px; }
 
 .metric-card.highlight {
   border-color: var(--accent-color);
@@ -185,6 +195,8 @@ html, body {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-bright);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .metric-card.highlight .value {
@@ -192,8 +204,9 @@ html, body {
 }
 
 .metric-card .value small {
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .header-tools {
@@ -644,18 +657,33 @@ html, body {
   gap: 10px;
   font-size: 12px;
   color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.speed-control label {
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .speed-control input[type="range"] {
+  width: 110px;
+  flex-shrink: 0;
   accent-color: var(--accent-color);
   cursor: pointer;
 }
 
 .speed-val {
   font-family: var(--font-mono);
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-bright);
-  min-width: 100px;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  text-align: left;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 /* Workstation Tabs */
