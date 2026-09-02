@@ -38,16 +38,39 @@ class RelayAudioEngine {
   constructor() {
     this.ctx = null;
     this.enabled = true;
+    this.unlocked = false;
+    this.attachUnlockListeners();
+  }
+
+  attachUnlockListeners() {
+    const unlock = () => {
+      this.init();
+      if (this.ctx && this.ctx.state === 'running') {
+        this.unlocked = true;
+        ['click', 'keydown', 'touchstart', 'mousedown'].forEach(ev => {
+          window.removeEventListener(ev, unlock);
+        });
+      }
+    };
+    ['click', 'keydown', 'touchstart', 'mousedown'].forEach(ev => {
+      window.addEventListener(ev, unlock, { once: false, passive: true });
+    });
   }
 
   init() {
-    if (!this.ctx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioContext();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
+    try {
+      if (!this.ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          this.ctx = new AudioCtx();
+        }
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().then(() => {
+          this.unlocked = true;
+        }).catch(() => {});
+      }
+    } catch (e) {}
   }
 
   toggle() {
@@ -58,43 +81,54 @@ class RelayAudioEngine {
 
   playClick(pitchVariance = 1.0) {
     if (!this.enabled) return;
-    try {
-      this.init();
-      if (!this.ctx) return;
+    this.init();
+    if (!this.ctx || this.ctx.state !== 'running') return;
 
+    try {
       const now = this.ctx.currentTime;
 
-      // Noise buffer for mechanical snap
-      const bufferSize = this.ctx.sampleRate * 0.008; // 8ms
+      // 1. Sharp mechanical impulse noise (the armature hitting the contact)
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.012); // 12ms
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const output = buffer.getChannelData(0);
+      const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
-        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
       }
 
       const noise = this.ctx.createBufferSource();
       noise.buffer = buffer;
 
-      // Bandpass filter for authentic relay coil/spring resonance
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(1400 * pitchVariance, now);
-      filter.Q.setValueAtTime(4.0, now);
+      const bandpass = this.ctx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.setValueAtTime(1800 * pitchVariance, now);
+      bandpass.Q.setValueAtTime(3.5, now);
 
-      // Gain Envelope
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.008);
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.7, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
 
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
+      noise.connect(bandpass);
+      bandpass.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+
+      // 2. Metallic ping resonance (spring / casing oscillation)
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime((850 + Math.random() * 150) * pitchVariance, now);
+      osc.frequency.exponentialRampToValueAtTime(320 * pitchVariance, now + 0.015);
+
+      oscGain.gain.setValueAtTime(0.25, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+
+      osc.connect(oscGain);
+      oscGain.connect(this.ctx.destination);
 
       noise.start(now);
-      noise.stop(now + 0.01);
-    } catch (e) {
-      // Audio context might be restricted
-    }
+      noise.stop(now + 0.015);
+      osc.start(now);
+      osc.stop(now + 0.018);
+    } catch (e) {}
   }
 }
 
@@ -765,6 +799,90 @@ daten[25] = 10;
 // CLACK-BASIC PRESET PROGRAMS
 // ==========================================
 const BASIC_PRESETS = {
+  ping_pong: `REM ============================================================
+REM 🏓 Clack-BASIC: Autonomes Ping-Pong (Self-Playing AI Pong)
+REM Laeuft in Echtzeit auf der 32x32 LED-Matrix (Worte 960..1023)
+REM ============================================================
+
+REM 1. Initialisierung
+CLS
+
+LET BX = 16
+LET BY = 16
+LET VX = 1
+LET VY = 1
+
+LET LY = 14
+LET RY = 14
+
+GAME_LOOP:
+    REM --- Display leeren fuer neuen Frame ---
+    CLS
+    
+    REM --- 1. Linkes Paddle zeichnen (X=1, Hoehe 4) ---
+    PSET 1, LY, 0xFFFF
+    PSET 1, LY + 1, 0xFFFF
+    PSET 1, LY + 2, 0xFFFF
+    PSET 1, LY + 3, 0xFFFF
+    
+    REM --- 2. Rechtes Paddle zeichnen (X=30, Hoehe 4) ---
+    PSET 30, RY, 0xFFFF
+    PSET 30, RY + 1, 0xFFFF
+    PSET 30, RY + 2, 0xFFFF
+    PSET 30, RY + 3, 0xFFFF
+    
+    REM --- 3. Ball zeichnen (BX, BY) ---
+    PSET BX, BY, 0xFFFF
+    
+    REM --- 4. Ball bewegen ---
+    LET BX = BX + VX
+    LET BY = BY + VY
+    
+    REM --- 5. Bandenkollision oben / unten ---
+    IF BY <= 1 THEN
+        LET VY = 1
+    END IF
+    IF BY >= 30 THEN
+        LET VY = -1
+    END IF
+    
+    REM --- 6. Paddle-Kollision Links (X=2) ---
+    IF BX <= 2 THEN
+        LET VX = 1
+    END IF
+    
+    REM --- 7. Paddle-Kollision Rechts (X=29) ---
+    IF BX >= 29 THEN
+        LET VX = -1
+    END IF
+    
+    REM --- 8. Autonome KI: Linkes Paddle folgt Ball ---
+    IF BY > LY + 1 THEN
+        IF LY < 27 THEN
+            LET LY = LY + 1
+        END IF
+    END IF
+    IF BY < LY + 1 THEN
+        IF LY > 1 THEN
+            LET LY = LY - 1
+        END IF
+    END IF
+    
+    REM --- 9. Autonome KI: Rechtes Paddle folgt Ball ---
+    IF BY > RY + 1 THEN
+        IF RY < 27 THEN
+            LET RY = RY + 1
+        END IF
+    END IF
+    IF BY < RY + 1 THEN
+        IF RY > 1 THEN
+            LET RY = RY - 1
+        END IF
+    END IF
+    
+    GOTO GAME_LOOP
+`,
+
   graphics_demo: `REM ============================================================
 REM ⚡ Clack-BASIC: 4-Display LED Matrix Grafik-Demo (32x32)
 REM ============================================================
@@ -874,7 +992,7 @@ class ClackStudioApp {
     this.isRunning = false;
     this.timerId = null;
     this.speedHz = 20;
-    this.matrixResolution = 64;
+    this.matrixResolution = 32;
 
     this.initDOM();
     this.initLEDArrays();
@@ -884,7 +1002,7 @@ class ClackStudioApp {
 
     // Load initial preset
     this.loadPreset('matrix_bounce');
-    this.loadBasicPreset('graphics_demo');
+    this.loadBasicPreset('ping_pong');
   }
 
   initDOM() {
@@ -1068,10 +1186,11 @@ class ClackStudioApp {
         }
       }
     } else {
-      // 32x32: 2 words per row, 32 rows = 64 words
+      // 32x32: 4 Matrix Displays ab 0x03C0 (960..1023), 2 words per row (32 bits), 32 rows = 64 words
+      const fbStart32 = 960;
       for (let y = 0; y < 32; y++) {
         for (let wordOffset = 0; wordOffset < 2; wordOffset++) {
-          const currentWordAddr = FRAMEBUFFER_START + (y * 2) + wordOffset;
+          const currentWordAddr = fbStart32 + (y * 2) + wordOffset;
           const word = currentWordAddr < MEM_SIZE ? this.cpu.memory[currentWordAddr] : 0;
 
           for (let bit = 15; bit >= 0; bit--) {
@@ -1133,6 +1252,10 @@ class ClackStudioApp {
   }
 
   updateMemoryGrid() {
+    const isScreenAddr = (addr) => {
+      return (this.matrixResolution === 32) ? (addr >= 960 && addr < 1024) : (addr >= 768 && addr < 1024);
+    };
+
     for (let i = 0; i < MEM_SIZE; i++) {
       const cell = document.getElementById(`mem-cell-${i}`);
       if (!cell) continue;
@@ -1144,7 +1267,7 @@ class ClackStudioApp {
         cell.classList.add('cell-pc');
       } else if (i === this.cpu.lastWriteAddr) {
         cell.classList.add('cell-write');
-      } else if (i >= FRAMEBUFFER_START) {
+      } else if (isScreenAddr(i)) {
         cell.classList.add('cell-screen');
       } else if (val !== 0) {
         if (val >= 0x1000 && val <= 0x6000 || val === 0xF000) {
@@ -1199,7 +1322,18 @@ class ClackStudioApp {
     // Matrix Res
     this.matrixRes.addEventListener('change', (e) => {
       this.matrixResolution = parseInt(e.target.value, 10);
+      const baseTag = document.getElementById('matrix-base-tag');
+      const statusTag = document.getElementById('matrix-status');
+      if (this.matrixResolution === 32) {
+        if (baseTag) baseTag.innerText = "RAM: 0x03C0 (960..1023)";
+        if (statusTag) statusTag.innerText = "Modus: 4x 8x32/16x16 Matrix (64 Worte Framebuffer)";
+      } else {
+        if (baseTag) baseTag.innerText = "RAM: 0x0300 (768..1023)";
+        if (statusTag) statusTag.innerText = "Modus: 1-Bit Bitmap (16 Pixels / Wort) | 256 Worte Framebuffer";
+      }
       this.renderMatrix();
+      this.updateMemoryGrid();
+    });
     });
 
     document.getElementById('btn-clear-screen').addEventListener('click', () => {
@@ -1733,3 +1867,10 @@ class ClackStudioApp {
 window.addEventListener('DOMContentLoaded', () => {
   window.app = new ClackStudioApp();
 });
+
+// Register Service Worker for PWA Offline Support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}

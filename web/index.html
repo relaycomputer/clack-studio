@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>⚡ CLACK-STUDIO — 16-Bit Relay Computer Simulator & Lab</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <meta name="theme-color" content="#ffb000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,10 +82,10 @@
             </div>
             <div class="matrix-controls">
               <select id="matrix-res">
-                <option value="64">64 × 64 Dot Matrix</option>
-                <option value="32">32 × 32 Dot Matrix</option>
+                <option value="32" selected>32 × 32 (4x Hardware Matrix ab 0x03C0 / 960)</option>
+                <option value="64">64 × 64 (Full Framebuffer ab 0x0300 / 768)</option>
               </select>
-              <span class="mem-base-tag">RAM: 0x0300 (768..1023)</span>
+              <span class="mem-base-tag" id="matrix-base-tag">RAM: 0x03C0 (960..1023)</span>
             </div>
           </div>
           <div class="matrix-canvas-container">
@@ -88,7 +93,7 @@
             <div class="matrix-grid-overlay"></div>
           </div>
           <div class="matrix-footer">
-            <span id="matrix-status">Modus: 1-Bit Bitmap (16 Pixels / Wort) | 256 Worte Framebuffer</span>
+            <span id="matrix-status">Modus: 4x 8x32/16x16 Matrix (64 Worte Framebuffer)</span>
             <button id="btn-clear-screen" class="btn-subtle">Screen leeren</button>
           </div>
         </div>
@@ -259,6 +264,7 @@
                 <div class="preset-selector">
                   <label>BASIC Vorlage:</label>
                   <select id="select-basic-preset">
+                    <option value="ping_pong" selected>🏓 Autonomes Ping-Pong (ping_pong.bas)</option>
                     <option value="graphics_demo">🎨 4-Display Matrix Grafik (graphics_demo.bas)</option>
                     <option value="math_test">🔢 Mathematik & Logik Test (math_test.bas)</option>
                     <option value="data_test">📋 DATA / READ / RESTORE (data_test.bas)</option>
