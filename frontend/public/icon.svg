@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffc433" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#ff9000" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#06090f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Chassis -->
+  <rect width="512" height="512" rx="96" fill="url(#metal)" stroke="#334155" stroke-width="12"/>
+  
+  <!-- Outer Relay Coil Glow -->
+  <circle cx="256" cy="256" r="180" fill="url(#glow)" opacity="0.4"/>
+  
+  <!-- LED Matrix Grid (4x4 Mini Preview) -->
+  <g fill="#ffb000">
+    <circle cx="176" cy="176" r="22" opacity="0.9"/>
+    <circle cx="230" cy="176" r="22" opacity="0.9"/>
+    <circle cx="284" cy="176" r="22" opacity="0.3"/>
+    <circle cx="338" cy="176" r="22" opacity="0.9"/>
+    
+    <circle cx="176" cy="230" r="22" opacity="0.9"/>
+    <circle cx="230" cy="230" r="22" opacity="0.3"/>
+    <circle cx="284" cy="230" r="22" opacity="0.9"/>
+    <circle cx="338" cy="230" r="22" opacity="0.3"/>
+    
+    <circle cx="176" cy="284" r="22" opacity="0.9"/>
+    <circle cx="230" cy="284" r="22" opacity="0.9"/>
+    <circle cx="284" cy="284" r="22" opacity="0.9"/>
+    <circle cx="338" cy="284" r="22" opacity="0.9"/>
+    
+    <circle cx="176" cy="338" r="22" opacity="0.3"/>
+    <circle cx="230" cy="338" r="22" opacity="0.9"/>
+    <circle cx="284" cy="338" r="22" opacity="0.3"/>
+    <circle cx="338" cy="338" r="22" opacity="0.9"/>
+  </g>
+  
+  <!-- Lightning Bolt -->
+  <path d="M280 80 L180 270 L260 270 L230 430 L340 240 L260 240 Z" fill="#ffffff" opacity="0.85" filter="drop-shadow(0 0 10px #ffb000)"/>
+</svg>

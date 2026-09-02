@@ -19,7 +19,7 @@ import (
 	"clack-basic/pkg/parser"
 )
 
-//go:embed web/*
+//go:embed frontend/dist/*
 var webFS embed.FS
 
 type Server struct {
@@ -55,8 +55,8 @@ func main() {
 	mux.HandleFunc("/api/run", srv.handleRun)
 	mux.HandleFunc("/api/reset", srv.handleReset)
 
-	// Static Web Frontend
-	subFS, err := fs.Sub(webFS, "web")
+	// Static Web Frontend (Svelte 5 + Vite Build)
+	subFS, err := fs.Sub(webFS, "frontend/dist")
 	if err != nil {
 		log.Fatalf("Failed to initialize web filesystem: %v", err)
 	}

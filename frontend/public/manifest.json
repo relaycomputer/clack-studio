@@ -1,0 +1,20 @@
+{
+  "name": "CLACK-STUDIO — 16-Bit Relay Computer Lab",
+  "short_name": "Clack-Studio",
+  "description": "Visual Hardware Simulator, BASIC IDE and Logic Analyzer for the 16-Bit Relay Computer",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#06090f",
+  "theme_color": "#ffb000",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "developer-tools", "utilities"]
+}
