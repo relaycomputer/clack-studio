@@ -122,8 +122,9 @@ func (m *Machine) LoadProgram(source string) (int, error) {
 	reBlockComment := regexp.MustCompile(`(?s)/\*.*?\*/`)
 	cleanSource := reBlockComment.ReplaceAllString(source, "")
 
-	// Pattern for daten[123] = 0x1400; or daten[123] = 118;
-	linePattern := regexp.MustCompile(`(?i)daten\[\s*(\d+)\s*\]\s*=\s*(0x[0-9A-Fa-f]+|\d+)\s*;`)
+	// Pattern for daten[123] = 0x1400; or 123 0x1400
+	reCArray := regexp.MustCompile(`(?i)daten\[\s*(\d+)\s*\]\s*=\s*(0x[0-9A-Fa-f]+|\d+)\s*;`)
+	reAddrVal := regexp.MustCompile(`^\s*(\d+)\s+(0x[0-9A-Fa-f]+|\d+)\b`)
 
 	count := 0
 	lines := strings.Split(cleanSource, "\n")
@@ -137,18 +138,26 @@ func (m *Machine) LoadProgram(source string) (int, error) {
 			line = line[:idx]
 		}
 		line = strings.TrimSpace(line)
-		if line == "" {
+		if line == "" || strings.EqualFold(line, "CLR") || strings.EqualFold(line, "RUN") {
 			continue
 		}
 
-		matches := linePattern.FindStringSubmatch(line)
-		if len(matches) == 3 {
-			idx64, err := strconv.ParseUint(matches[1], 10, 16)
+		var addrStr, valStr string
+
+		if match := reCArray.FindStringSubmatch(line); len(match) == 3 {
+			addrStr = match[1]
+			valStr = match[2]
+		} else if match := reAddrVal.FindStringSubmatch(line); len(match) == 3 {
+			addrStr = match[1]
+			valStr = match[2]
+		}
+
+		if addrStr != "" && valStr != "" {
+			idx64, err := strconv.ParseUint(addrStr, 10, 16)
 			if err != nil || idx64 >= MemSize {
 				continue
 			}
 
-			valStr := matches[2]
 			var val64 uint64
 			if strings.HasPrefix(strings.ToLower(valStr), "0x") {
 				val64, err = strconv.ParseUint(valStr[2:], 16, 16)

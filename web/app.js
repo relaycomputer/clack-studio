@@ -762,6 +762,108 @@ daten[25] = 10;
 };
 
 // ==========================================
+// CLACK-BASIC PRESET PROGRAMS
+// ==========================================
+const BASIC_PRESETS = {
+  graphics_demo: `REM ============================================================
+REM ⚡ Clack-BASIC: 4-Display LED Matrix Grafik-Demo (32x32)
+REM ============================================================
+
+REM 1. Display leeren (Worte 960..1023)
+CLS
+
+REM 2. Diagonale Linie zeichnen
+FOR I = 0 TO 15 STEP 1
+    PSET I, I, 0xFFFF
+NEXT I
+
+REM 3. Horizontale Linie bei Y = 8
+FOR X = 0 TO 31 STEP 1
+    PSET X, 8, 0xAAAA
+NEXT X
+
+HALT
+`,
+
+  math_test: `REM ============================================================
+REM ⚡ Clack-BASIC: Mathematik- & Logiktest
+REM ============================================================
+
+LET A = 25
+LET B = 14
+
+REM 1. Addition & Subtraktion
+LET C = A + B
+LET D = A - B
+
+REM 2. 16-Bit Multiplikation
+LET P = 12 * 7
+
+REM 3. 16-Bit Division & Modulo
+LET Q = 100 / 8
+LET R = 100 MOD 8
+
+REM 4. Verzweigung
+IF P > 80 THEN
+    LET STATUS = 1
+ELSE
+    LET STATUS = 0
+END IF
+
+HALT
+`,
+
+  data_test: `REM ============================================================
+REM ⚡ Clack-BASIC: DATA, READ & RESTORE Test
+REM ============================================================
+
+DATA 100, 200, 300, 400
+
+READ A, B
+READ C, D
+
+RESTORE
+READ FIRST_AGAIN
+
+HALT
+`,
+
+  matrix_bounce_basic: `REM ============================================================
+REM ⚡ Clack-BASIC: Bouncing Pixel Animation (32x32 Matrix)
+REM ============================================================
+
+CLS
+
+LET X = 0
+LET Y = 0
+LET DX = 1
+LET DY = 1
+
+LOOP:
+    PSET X, Y, 0xFFFF
+    
+    LET X = X + DX
+    LET Y = Y + DY
+    
+    IF X >= 30 THEN
+        LET DX = -1
+    END IF
+    IF X <= 1 THEN
+        LET DX = 1
+    END IF
+    
+    IF Y >= 30 THEN
+        LET DY = -1
+    END IF
+    IF Y <= 1 THEN
+        LET DY = 1
+    END IF
+    
+    GOTO LOOP
+`
+};
+
+// ==========================================
 // STUDIO UI CONTROLLER
 // ==========================================
 class ClackStudioApp {
@@ -782,6 +884,7 @@ class ClackStudioApp {
 
     // Load initial preset
     this.loadPreset('matrix_bounce');
+    this.loadBasicPreset('graphics_demo');
   }
 
   initDOM() {
@@ -830,6 +933,18 @@ class ClackStudioApp {
     this.btnLoadProg = document.getElementById('btn-load-prog');
     this.btnExportTxt = document.getElementById('btn-export-txt');
     this.editorStatus = document.getElementById('editor-status');
+
+    // Clack-BASIC UI Elements
+    this.basicCodeEditor = document.getElementById('basic-code-editor');
+    this.selectBasicPreset = document.getElementById('select-basic-preset');
+    this.btnCompileLoad = document.getElementById('btn-compile-load');
+    this.btnCompileOnly = document.getElementById('btn-compile-only');
+    this.btnExportBasicArduino = document.getElementById('btn-export-basic-arduino');
+    this.btnExportBasicCarray = document.getElementById('btn-export-basic-carray');
+    this.basicListingBox = document.getElementById('basic-listing-box');
+    this.basicListingContent = document.getElementById('basic-listing-content');
+    this.btnCloseListing = document.getElementById('btn-close-listing');
+    this.basicCompilerStatus = document.getElementById('basic-compiler-status');
 
     this.disasmList = document.getElementById('disasm-list');
     this.memoryGrid = document.getElementById('memory-grid');
@@ -1129,6 +1244,43 @@ class ClackStudioApp {
       this.scrollToPC();
     });
 
+    // Clack-BASIC Compiler Events
+    if (this.selectBasicPreset) {
+      this.selectBasicPreset.addEventListener('change', (e) => {
+        this.loadBasicPreset(e.target.value);
+      });
+    }
+
+    if (this.btnCompileLoad) {
+      this.btnCompileLoad.addEventListener('click', () => {
+        this.compileBasic(true);
+      });
+    }
+
+    if (this.btnCompileOnly) {
+      this.btnCompileOnly.addEventListener('click', () => {
+        this.compileBasic(false);
+      });
+    }
+
+    if (this.btnExportBasicArduino) {
+      this.btnExportBasicArduino.addEventListener('click', () => {
+        this.exportBasicCode('arduino');
+      });
+    }
+
+    if (this.btnExportBasicCarray) {
+      this.btnExportBasicCarray.addEventListener('click', () => {
+        this.exportBasicCode('c-array');
+      });
+    }
+
+    if (this.btnCloseListing) {
+      this.btnCloseListing.addEventListener('click', () => {
+        this.basicListingBox.style.display = 'none';
+      });
+    }
+
     // Tabs switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1143,6 +1295,112 @@ class ClackStudioApp {
         if (btn.dataset.tab === 'tab-history') this.renderHistory();
       });
     });
+  }
+
+  loadBasicPreset(key) {
+    if (BASIC_PRESETS[key] && this.basicCodeEditor) {
+      this.basicCodeEditor.value = BASIC_PRESETS[key];
+      if (this.basicCompilerStatus) {
+        this.basicCompilerStatus.className = 'editor-status';
+        this.basicCompilerStatus.innerText = `BASIC-Vorlage '${key}' geladen. Bereit zum Kompilieren.`;
+      }
+    }
+  }
+
+  async compileBasic(loadIntoSim = false) {
+    if (!this.basicCodeEditor) return;
+    const source = this.basicCodeEditor.value;
+    if (!source.trim()) {
+      if (this.basicCompilerStatus) {
+        this.basicCompilerStatus.className = 'editor-status error';
+        this.basicCompilerStatus.innerText = 'Fehler: Kein BASIC-Quellcode eingegeben.';
+      }
+      return;
+    }
+
+    if (this.basicCompilerStatus) {
+      this.basicCompilerStatus.className = 'editor-status';
+      this.basicCompilerStatus.innerText = 'Kompiliere BASIC-Code mit Clack-BASIC...';
+    }
+
+    const endpoint = loadIntoSim ? '/api/compile-and-load' : '/api/compile';
+
+    try {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: source, format: 'arduino' })
+      });
+
+      const data = await resp.json();
+
+      if (!data.success) {
+        if (this.basicCompilerStatus) {
+          this.basicCompilerStatus.className = 'editor-status error';
+          this.basicCompilerStatus.innerText = `❌ ${data.error}`;
+        }
+        return;
+      }
+
+      // Show Listing
+      if (this.basicListingContent && this.basicListingBox) {
+        this.basicListingContent.innerText = data.listing || data.code;
+        this.basicListingBox.style.display = 'flex';
+      }
+
+      const pct = ((data.usedWords / data.totalWords) * 100).toFixed(1);
+
+      if (loadIntoSim) {
+        this.pause();
+        const count = this.cpu.loadSource(data.arduinoCode);
+        this.updateUI();
+        this.renderDisassembler();
+        if (this.basicCompilerStatus) {
+          this.basicCompilerStatus.className = 'editor-status success';
+          this.basicCompilerStatus.innerText = `✅ In ${data.durationMs.toFixed(2)} ms kompiliert & geladen (${count} Worte, ${pct}%). Drücke RUN!`;
+        }
+      } else {
+        if (this.basicCompilerStatus) {
+          this.basicCompilerStatus.className = 'editor-status success';
+          this.basicCompilerStatus.innerText = `✅ In ${data.durationMs.toFixed(2)} ms erfolgreich kompiliert! Speicher: ${data.usedWords} / ${data.totalWords} Worte (${pct}%).`;
+        }
+      }
+
+    } catch (err) {
+      if (this.basicCompilerStatus) {
+        this.basicCompilerStatus.className = 'editor-status error';
+        this.basicCompilerStatus.innerText = `❌ Verbindungsfehler zum Compiler: ${err.message}`;
+      }
+    }
+  }
+
+  async exportBasicCode(format) {
+    if (!this.basicCodeEditor) return;
+    const source = this.basicCodeEditor.value;
+    try {
+      const resp = await fetch('/api/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: source, format: format })
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        alert('Kompilierfehler:\n' + data.error);
+        return;
+      }
+
+      const ext = format === 'c-array' ? 'c' : 'txt';
+      const filename = `clack_compiled.${ext}`;
+      const blob = new Blob([data.code], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Fehler beim Exportieren: ' + err.message);
+    }
   }
 
   loadPreset(key) {

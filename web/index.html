@@ -244,7 +244,8 @@
         <!-- Multi-Tab Workstation -->
         <div class="workstation-panel">
           <div class="tabs-header">
-            <button class="tab-btn active" data-tab="tab-editor">💻 Code Studio & Loader</button>
+            <button class="tab-btn active" data-tab="tab-basic">📜 Clack-BASIC Compiler</button>
+            <button class="tab-btn" data-tab="tab-editor">💻 Maschinencode & Loader</button>
             <button class="tab-btn" data-tab="tab-disasm">🔍 Disassembler & Trace</button>
             <button class="tab-btn" data-tab="tab-memory">🧠 1024-Wort RAM Matrix</button>
             <button class="tab-btn" data-tab="tab-history">📊 Logic Analyzer History</button>
@@ -252,8 +253,46 @@
 
           <div class="tab-contents">
             
+            <!-- Tab 0: Clack-BASIC Compiler -->
+            <div class="tab-pane active" id="tab-basic">
+              <div class="editor-toolbar">
+                <div class="preset-selector">
+                  <label>BASIC Vorlage:</label>
+                  <select id="select-basic-preset">
+                    <option value="graphics_demo">🎨 4-Display Matrix Grafik (graphics_demo.bas)</option>
+                    <option value="math_test">🔢 Mathematik & Logik Test (math_test.bas)</option>
+                    <option value="data_test">📋 DATA / READ / RESTORE (data_test.bas)</option>
+                    <option value="matrix_bounce_basic">✨ Bouncing Pixel Animation</option>
+                  </select>
+                </div>
+                <div class="editor-actions">
+                  <button id="btn-compile-load" class="btn btn-primary" title="Kompiliert BASIC und laedt den Maschinencode sofort in den Simulator">⚡ Kompilieren & In Simulator laden</button>
+                  <button id="btn-compile-only" class="btn btn-secondary" title="Nur kompilieren und Assembler-Listing anzeigen">🔍 Nur Kompilieren</button>
+                  <button id="btn-export-basic-arduino" class="btn-subtle" title="Maschinencode im Arduino-Loader-Format herunterladen">📥 Arduino-Code</button>
+                  <button id="btn-export-basic-carray" class="btn-subtle" title="Maschinencode als C-Array herunterladen">📥 C-Array</button>
+                </div>
+              </div>
+
+              <div class="basic-workspace-layout">
+                <div class="editor-container basic-editor-box">
+                  <textarea id="basic-code-editor" spellcheck="false" placeholder="REM ⚡ Schreibe dein BASIC-Programm hier...&#10;LET A = 25&#10;LET B = 14&#10;LET C = A + B&#10;HALT"></textarea>
+                </div>
+                <div class="basic-listing-box" id="basic-listing-box" style="display: none;">
+                  <div class="listing-header">
+                    <span>Assembler-Listing & Disassembly</span>
+                    <button id="btn-close-listing" class="btn-subtle" style="padding: 2px 6px;">✕</button>
+                  </div>
+                  <pre class="listing-content" id="basic-listing-content"></pre>
+                </div>
+              </div>
+
+              <div class="editor-status" id="basic-compiler-status">
+                ⚡ Clack-BASIC Cross-Compiler bereit. Unterstützt LET, IF, FOR..NEXT, PSET, CLS, DATA/READ, Multiplikation & Division.
+              </div>
+            </div>
+
             <!-- Tab 1: Code Editor & Presets -->
-            <div class="tab-pane active" id="tab-editor">
+            <div class="tab-pane" id="tab-editor">
               <div class="editor-toolbar">
                 <div class="preset-selector">
                   <label>Beispielprogramm laden:</label>

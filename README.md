@@ -21,8 +21,16 @@
 3. **Akustik-Synthesizer (WebAudio):**
    * Authentischer mechanischer Relais-Klack-Soundeffekt bei Schaltzyklen.
 
-4. **Multi-Tab Workstation:**
-   * **Code Studio & Loader:** Editor mit Syntaxbeispielen (*Dijkstra Österreich*, *Matrix Bouncing Ball*, *Sinus-Muster*, *Mathe-Demo*, *Zähler*).
+4. **Integrierter Clack-BASIC Cross-Compiler:**
+   * Eigener **BASIC-Compiler Tab** direkt im Studio.
+   * BASIC-Code eingeben (`LET`, `IF..THEN..ELSE`, `FOR..NEXT`, `PSET`, `CLS`, `DATA/READ`, `*`, `/`).
+   * **1-Klick Kompilieren & Sofortausführung** (`⚡ In Simulator laden & Reset`).
+   * Live Assembler-Listing & Disassembly-Ansicht.
+   * Direkter Download als Arduino Loader Format (`.txt`) oder C-Array (`.c`).
+
+5. **Multi-Tab Workstation:**
+   * **Clack-BASIC Compiler:** Direkte BASIC-Entwicklungsumgebung mit Vorlagen.
+   * **Code Studio & Loader:** Maschinencode-Editor mit bidirektionalem Format-Konverter.
    * **Live Disassembler:** Scrollbare Übersicht aller 1024 Worte mit aktivem `PC`-Cursor.
    * **1024-Wort RAM Matrix:** Interaktive Speicher-Heatmap mit Lese-/Schreibanimation und Live-Zellen-Editor.
    * **Logic Analyzer History:** Zyklusgenaue Trace-Tabelle, exportierbar als `.csv` und `.txt`.

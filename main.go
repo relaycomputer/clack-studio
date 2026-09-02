@@ -9,8 +9,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"clack-studio/pkg/emulator"
+
+	"clack-basic/pkg/codegen"
+	"clack-basic/pkg/emitter"
+	"clack-basic/pkg/lexer"
+	"clack-basic/pkg/parser"
 )
 
 //go:embed web/*
@@ -43,6 +49,8 @@ func main() {
 	// API Endpoints
 	mux.HandleFunc("/api/state", srv.handleState)
 	mux.HandleFunc("/api/load", srv.handleLoad)
+	mux.HandleFunc("/api/compile", srv.handleCompile)
+	mux.HandleFunc("/api/compile-and-load", srv.handleCompileAndLoad)
 	mux.HandleFunc("/api/step", srv.handleStep)
 	mux.HandleFunc("/api/run", srv.handleRun)
 	mux.HandleFunc("/api/reset", srv.handleReset)
@@ -109,6 +117,157 @@ func (s *Server) handleLoad(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"count":   count,
 		"state":   s.machine.GetState(),
+	})
+}
+
+func (s *Server) handleCompile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Source string `json:"source"`
+		Format string `json:"format"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	startTime := time.Now()
+	l := lexer.NewLexer(req.Source)
+	tokens := l.Tokenize()
+
+	p := parser.NewParser(tokens)
+	prog, err := p.ParseProgram()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   fmt.Sprintf("%v", err),
+		})
+		return
+	}
+
+	cg := codegen.NewCodeGenerator()
+	memory, comments, err := cg.Generate(prog)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   fmt.Sprintf("Codegen-Fehler: %v", err),
+		})
+		return
+	}
+
+	duration := time.Since(startTime)
+
+	usedWords := 0
+	for _, val := range memory {
+		if val != 0 {
+			usedWords++
+		}
+	}
+
+	fmtReq := emitter.OutputFormat(req.Format)
+	if fmtReq == "" {
+		fmtReq = emitter.FormatArduino
+	}
+
+	code := emitter.Emit(memory, comments, fmtReq)
+	listing := emitter.Emit(memory, comments, emitter.FormatListing)
+	arduinoCode := emitter.Emit(memory, comments, emitter.FormatArduino)
+	carrayCode := emitter.Emit(memory, comments, emitter.FormatCArray)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"success":     true,
+		"code":        code,
+		"arduinoCode": arduinoCode,
+		"carrayCode":  carrayCode,
+		"listing":     listing,
+		"usedWords":   usedWords,
+		"totalWords":  codegen.MaxMemorySize,
+		"durationMs":  float64(duration.Microseconds()) / 1000.0,
+	})
+}
+
+func (s *Server) handleCompileAndLoad(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Source string `json:"source"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	startTime := time.Now()
+	l := lexer.NewLexer(req.Source)
+	tokens := l.Tokenize()
+
+	p := parser.NewParser(tokens)
+	prog, err := p.ParseProgram()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   fmt.Sprintf("%v", err),
+		})
+		return
+	}
+
+	cg := codegen.NewCodeGenerator()
+	memory, comments, err := cg.Generate(prog)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   fmt.Sprintf("Codegen-Fehler: %v", err),
+		})
+		return
+	}
+
+	duration := time.Since(startTime)
+
+	arduinoCode := emitter.Emit(memory, comments, emitter.FormatArduino)
+	carrayCode := emitter.Emit(memory, comments, emitter.FormatCArray)
+	listing := emitter.Emit(memory, comments, emitter.FormatListing)
+
+	count, loadErr := s.machine.LoadProgram(arduinoCode)
+	if loadErr != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   fmt.Sprintf("Load-Fehler: %v", loadErr),
+		})
+		return
+	}
+
+	usedWords := 0
+	for _, val := range memory {
+		if val != 0 {
+			usedWords++
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"success":     true,
+		"count":       count,
+		"arduinoCode": arduinoCode,
+		"carrayCode":  carrayCode,
+		"listing":     listing,
+		"usedWords":   usedWords,
+		"totalWords":  codegen.MaxMemorySize,
+		"durationMs":  float64(duration.Microseconds()) / 1000.0,
+		"state":       s.machine.GetState(),
+		"memory":      s.machine.GetMemoryDump(),
 	})
 }
 
