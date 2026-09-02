@@ -1,23 +1,24 @@
-# 🟢 64x64 & 32x32 LED Matrix Display
+# 💡 LED-Matrix Display & Framebuffer-Architektur
 
-Das LED-Matrix-Display ist als **Memory-Mapped Framebuffer** im RAM des Relaisrechners angebunden.
-
----
-
-## 1. Speicherzuordnung (64x64 Modus)
-
-* **Startadresse:** `0x0300` (Dezimal `768`)
-* **Endadresse:** `0x03FF` (Dezimal `1023`)
-* **Gesamtgröße:** 256 Worte $\times$ 16 Bit = **4096 Pixel** (64 Zeilen $\times$ 64 Spalten)
-* **Pixel pro Wort:** 16 Pixel (Bit 15 = links, Bit 0 = rechts)
-* **Worte pro Zeile:** 4 Worte (z. B. Zeile 0 = Worte `768..771`)
+Clack-Studio simuliert die 4-Display LED-Hardwarematrix des 16-Bit Relaisrechners mit flüssigen 60 FPS über ein HTML5 Canvas.
 
 ---
 
-## 2. Farbmodi & Phosphor-Glow
+## 🗺️ Speicherabbild & Adressierung
 
-Über das Dropdown-Menü in der Kopfzeile können verschiedene klassische Bildschirmfarben gewählt werden:
-* **Amber (Bernstein):** Klassischer 80er-Jahre Gasplasma-/Terminal-Look.
-* **Phosphor Grün:** Nostalgischer P31-Oszilloskop-Grün-Phosphor.
-* **Cyber Cyan:** Moderner Neon-Blau-Look.
-* **Rubin Rot:** LED-Matrix in Rot.
+| Matrix-Modus | Speicherbereich | Worte | Bits pro Zeile | Auflösung |
+| :--- | :--- | :--- | :--- | :--- |
+| **32 × 32 Standard** | `960` .. `1023` (`0x03C0` .. `0x03FF`) | 64 Worte | 32 Bits (2 Worte) | 4x 8x32 bzw. 16x16 Matrix |
+| **64 × 64 Vollbild** | `768` .. `1023` (`0x0300` .. `0x03FF`) | 256 Worte | 64 Bits (4 Worte) | Voller Display-Speicher |
+
+---
+
+## 🎨 Single-Pixel Bitmasking
+Jedes Wort im Framebuffer steuert **16 horizontale LEDs**:
+* **Wort 0 (Linke Hälfte):** $X = 0$ (Bit 15, `0x8000`) bis $X = 15$ (Bit 0, `0x0001`).
+* **Wort 1 (Rechte Hälfte):** $X = 16$ (Bit 15, `0x8000`) bis $X = 31$ (Bit 0, `0x0001`).
+
+### Live-Status & Diagnose
+* **`⚡ X LEDs aktiv`**: Zeigt live die exakte Anzahl leuchtender LEDs im RAM an.
+* **`Schachbrett`**: Schreibt mit 1 Klick ein Testmuster direkt in den Framebuffer zur Funktionsprüfung.
+* **`Leeren`**: Setzt den Framebuffer auf Nullen zurück.
