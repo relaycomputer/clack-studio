@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ CLACK-STUDIO — 16-Bit Relay Computer Simulator & Lab</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-amber">
+  <div class="chassis">
+    <!-- Top Header & Status Bar -->
+    <header class="header-bar">
+      <div class="brand">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-text">
+          <h1>CLACK-STUDIO</h1>
+          <span class="subtitle">16-Bit Relay Computer Visual Hardware Lab & Emulator</span>
+        </div>
+      </div>
+      
+      <div class="header-metrics">
+        <div class="metric-card">
+          <span class="label">PC</span>
+          <span class="value" id="val-pc">0x0000</span>
+        </div>
+        <div class="metric-card highlight">
+          <span class="label">ACCU</span>
+          <span class="value" id="val-accu">0x0000 <small>(0)</small></span>
+        </div>
+        <div class="metric-card">
+          <span class="label">STACK</span>
+          <span class="value" id="val-stack">0x0000</span>
+        </div>
+        <div class="metric-card">
+          <span class="label">CYCLES</span>
+          <span class="value" id="val-cycles">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="label">RELAY TIME</span>
+          <span class="value" id="val-relay-time">0.00 s</span>
+        </div>
+      </div>
+
+      <div class="header-tools">
+        <div class="audio-toggle-wrapper">
+          <button id="btn-sound" class="btn-icon" title="Relais-Klick Audio ein/ausschalten">
+            <span class="icon">🔊</span> <span class="txt">Klick: AN</span>
+          </button>
+        </div>
+        <div class="theme-selector">
+          <label>Farbe:</label>
+          <select id="select-theme">
+            <option value="theme-amber" selected>Amber (Bernstein)</option>
+            <option value="theme-green">Phosphor Grün</option>
+            <option value="theme-cyan">Cyber Cyan</option>
+            <option value="theme-ruby">Rubin Rot</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-grid">
+      
+      <!-- Left Column: Frontpanel & LED Matrix -->
+      <section class="left-column">
+        
+        <!-- 64x64 / 32x32 LED Display Panel -->
+        <div class="panel matrix-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="dot live-dot"></span>
+              <span>LED-MATRIX DISPLAY</span>
+            </div>
+            <div class="matrix-controls">
+              <select id="matrix-res">
+                <option value="64">64 × 64 Dot Matrix</option>
+                <option value="32">32 × 32 Dot Matrix</option>
+              </select>
+              <span class="mem-base-tag">RAM: 0x0300 (768..1023)</span>
+            </div>
+          </div>
+          <div class="matrix-canvas-container">
+            <canvas id="matrix-canvas" width="384" height="384"></canvas>
+            <div class="matrix-grid-overlay"></div>
+          </div>
+          <div class="matrix-footer">
+            <span id="matrix-status">Modus: 1-Bit Bitmap (16 Pixels / Wort) | 256 Worte Framebuffer</span>
+            <button id="btn-clear-screen" class="btn-subtle">Screen leeren</button>
+          </div>
+        </div>
+
+        <!-- Hardware Register & Bus Frontpanel -->
+        <div class="panel frontpanel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="icon">🎛️</span>
+              <span>HARDWARE BUS & REGISTER PANEL</span>
+            </div>
+            <div class="status-groups">
+              <div class="status-cluster">
+                <span class="cluster-label">BUS</span>
+                <div class="lamp bus-lamp" id="lamp-read"><span>READ</span></div>
+                <div class="lamp bus-lamp" id="lamp-write"><span>WRITE</span></div>
+              </div>
+              <div class="status-cluster">
+                <span class="cluster-label">FLAGS</span>
+                <div class="lamp flag" id="lamp-carry"><span>C</span></div>
+                <div class="lamp flag" id="lamp-zero"><span>Z</span></div>
+                <div class="lamp flag" id="lamp-negative"><span>N</span></div>
+                <div class="lamp flag" id="lamp-even"><span>E</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bit Scale Ruler -->
+          <div class="bit-ruler-row">
+            <div class="ruler-spacer"></div>
+            <div class="ruler-scale">
+              <span class="ruler-group">15 · · 12</span>
+              <span class="ruler-group">11 · · 8</span>
+              <span class="ruler-group">7 · · 4</span>
+              <span class="ruler-group">3 · · 0</span>
+            </div>
+            <div class="ruler-val-spacer">WERT</div>
+          </div>
+
+          <div class="bus-display-group">
+            <!-- ACCU Register (16 bit) -->
+            <div class="led-bar-row">
+              <div class="led-label">
+                <span class="name">ACCU</span>
+                <span class="badge">16-Bit</span>
+              </div>
+              <div class="led-array" id="leds-accu"></div>
+              <div class="led-info" id="info-accu">
+                <div class="primary-val" id="hex-accu">0x0000</div>
+                <div class="secondary-val" id="sub-accu">dec: 0</div>
+              </div>
+            </div>
+
+            <!-- IR Instruction Register (16 bit) -->
+            <div class="led-bar-row">
+              <div class="led-label">
+                <span class="name">IR</span>
+                <span class="badge">16-Bit</span>
+              </div>
+              <div class="led-array" id="leds-ir"></div>
+              <div class="led-info" id="info-ir">
+                <div class="primary-val" id="hex-ir">0xF000</div>
+                <div class="secondary-val highlight-cmd" id="sub-ir">NOP</div>
+              </div>
+            </div>
+
+            <!-- DATA BUS (16 bit) -->
+            <div class="led-bar-row">
+              <div class="led-label">
+                <span class="name">DATENBUS</span>
+                <span class="badge">16-Bit</span>
+              </div>
+              <div class="led-array" id="leds-data"></div>
+              <div class="led-info" id="info-data">
+                <div class="primary-val" id="hex-data">0x0000</div>
+                <div class="secondary-val" id="sub-data">idle</div>
+              </div>
+            </div>
+
+            <!-- ADRESS BUS (10 bit) -->
+            <div class="led-bar-row">
+              <div class="led-label">
+                <span class="name">ADRESSBUS</span>
+                <span class="badge">10-Bit</span>
+              </div>
+              <div class="led-array" id="leds-addr"></div>
+              <div class="led-info" id="info-addr">
+                <div class="primary-val" id="hex-addr">0x0000</div>
+                <div class="secondary-val" id="sub-addr">RAM: 0</div>
+              </div>
+            </div>
+
+            <!-- PC Program Counter (10 bit) -->
+            <div class="led-bar-row">
+              <div class="led-label">
+                <span class="name">PC</span>
+                <span class="badge">10-Bit</span>
+              </div>
+              <div class="led-array" id="leds-pc"></div>
+              <div class="led-info" id="info-pc">
+                <div class="primary-val" id="hex-pc">0x0000</div>
+                <div class="secondary-val" id="sub-pc">step: 0</div>
+              </div>
+            </div>
+
+            <!-- STACK / SR Register (10 bit) -->
+            <div class="led-bar-row">
+              <div class="led-label">
+                <span class="name">STACK (SR)</span>
+                <span class="badge">10-Bit</span>
+              </div>
+              <div class="led-array" id="leds-stack"></div>
+              <div class="led-info" id="info-stack">
+                <div class="primary-val" id="hex-stack">0x0000</div>
+                <div class="secondary-val" id="sub-stack">ret: 0x0000</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Column: Controls, Code Studio, Disassembler, Memory Matrix, Trace -->
+      <section class="right-column">
+        
+        <!-- Simulation Transport Control Bar -->
+        <div class="transport-bar">
+          <div class="transport-buttons">
+            <button id="btn-run" class="btn btn-success">
+              <span class="btn-icon">▶</span> RUN
+            </button>
+            <button id="btn-pause" class="btn btn-warning" disabled>
+              <span class="btn-icon">⏸</span> PAUSE
+            </button>
+            <button id="btn-step" class="btn btn-primary">
+              <span class="btn-icon">⏭</span> STEP (1)
+            </button>
+            <button id="btn-step10" class="btn btn-secondary">
+              <span class="btn-icon">⏩</span> STEP (10)
+            </button>
+            <button id="btn-reset" class="btn btn-danger">
+              <span class="btn-icon">🔄</span> RESET
+            </button>
+          </div>
+
+          <div class="speed-control">
+            <label for="slider-speed">Taktfrequenz:</label>
+            <input type="range" id="slider-speed" min="1" max="100" value="20">
+            <span class="speed-val" id="speed-label">20 Hz (50ms)</span>
+          </div>
+        </div>
+
+        <!-- Multi-Tab Workstation -->
+        <div class="workstation-panel">
+          <div class="tabs-header">
+            <button class="tab-btn active" data-tab="tab-editor">💻 Code Studio & Loader</button>
+            <button class="tab-btn" data-tab="tab-disasm">🔍 Disassembler & Trace</button>
+            <button class="tab-btn" data-tab="tab-memory">🧠 1024-Wort RAM Matrix</button>
+            <button class="tab-btn" data-tab="tab-history">📊 Logic Analyzer History</button>
+          </div>
+
+          <div class="tab-contents">
+            
+            <!-- Tab 1: Code Editor & Presets -->
+            <div class="tab-pane active" id="tab-editor">
+              <div class="editor-toolbar">
+                <div class="preset-selector">
+                  <label>Beispielprogramm laden:</label>
+                  <select id="select-preset">
+                    <option value="matrix_bounce">🎨 64x64 Matrix: Bouncing Ball & Frame Animation</option>
+                    <option value="dijkstra">🗺️ Dijkstra: Kürzester Weg Österreich (17 Städte)</option>
+                    <option value="matrix_sine">✨ 64x64 Matrix: Pulsierendes Muster & Boxen</option>
+                    <option value="math_demo">🔢 Mathe & Logik: Multiplikation & Division Demo</option>
+                    <option value="counter_flags">⚡ Zähler & Flag-Test (Carry / Even / Zero)</option>
+                  </select>
+                </div>
+                <div class="editor-actions">
+                  <button id="btn-load-prog" class="btn btn-primary">⚡ In Simulator laden & Reset</button>
+                  <button id="btn-export-txt" class="btn btn-subtle">📥 Exportieren (.txt)</button>
+                </div>
+              </div>
+
+              <div class="editor-container">
+                <textarea id="code-editor" spellcheck="false" placeholder="// Hier Code eingeben (z.B. daten[0] = 0x1400; daten[1] = 100;)"></textarea>
+              </div>
+              <div class="editor-status" id="editor-status">
+                Bereit zum Laden.
+              </div>
+            </div>
+
+            <!-- Tab 2: Disassembler View -->
+            <div class="tab-pane" id="tab-disasm">
+              <div class="disasm-toolbar">
+                <span>Live Disassembler des 1024-Wort Speichers</span>
+                <button id="btn-scroll-to-pc" class="btn-subtle">Zu aktivem PC springen</button>
+              </div>
+              <div class="disasm-container" id="disasm-list">
+                <!-- Disassembled rows generated via JS -->
+              </div>
+            </div>
+
+            <!-- Tab 3: RAM Memory Matrix (Heatmap) -->
+            <div class="tab-pane" id="tab-memory">
+              <div class="mem-toolbar">
+                <div class="mem-legend">
+                  <span class="legend-item"><span class="box code"></span> Code</span>
+                  <span class="legend-item"><span class="box data"></span> Daten / Variablen</span>
+                  <span class="legend-item"><span class="box screen"></span> Framebuffer (768..1023)</span>
+                  <span class="legend-item"><span class="box pc"></span> Aktiver PC</span>
+                  <span class="legend-item"><span class="box write"></span> Letzter Schreibzugriff</span>
+                </div>
+                <div class="mem-search">
+                  <input type="number" id="mem-search-addr" placeholder="Adresse (0..1023)" min="0" max="1023">
+                </div>
+              </div>
+              <div class="memory-grid-container" id="memory-grid">
+                <!-- 1024 memory cells rendered here -->
+              </div>
+              <div class="mem-inspect" id="mem-inspect">
+                Klicke auf eine Zelle, um Details anzuzeigen oder zu editieren.
+              </div>
+            </div>
+
+            <!-- Tab 4: Logic Analyzer History -->
+            <div class="tab-pane" id="tab-history">
+              <div class="history-toolbar">
+                <span>Ausführungs-History (Zyklus für Zyklus)</span>
+                <div class="history-actions">
+                  <button id="btn-export-csv" class="btn btn-subtle">Export als CSV</button>
+                  <button id="btn-clear-history" class="btn btn-subtle">History leeren</button>
+                </div>
+              </div>
+              <div class="history-table-container">
+                <table class="history-table" id="history-table">
+                  <thead>
+                    <tr>
+                      <th>Idx</th>
+                      <th>Cmd</th>
+                      <th>Befehl</th>
+                      <th>PC</th>
+                      <th>Accu</th>
+                      <th>Addr</th>
+                      <th>Data</th>
+                      <th>R</th>
+                      <th>W</th>
+                      <th>Flag</th>
+                      <th>Stack</th>
+                      <th>Zyklen</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-tbody">
+                    <!-- History rows populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
