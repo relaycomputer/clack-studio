@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"clack-studio/pkg/emulator"
+	"clack-studio/pkg/flasher"
 
 	"clack-basic/pkg/codegen"
 	"clack-basic/pkg/emitter"
@@ -51,6 +52,8 @@ func main() {
 	mux.HandleFunc("/api/load", srv.handleLoad)
 	mux.HandleFunc("/api/compile", srv.handleCompile)
 	mux.HandleFunc("/api/compile-and-load", srv.handleCompileAndLoad)
+	mux.HandleFunc("/api/ports", srv.handlePorts)
+	mux.HandleFunc("/api/flash", srv.handleFlash)
 	mux.HandleFunc("/api/step", srv.handleStep)
 	mux.HandleFunc("/api/run", srv.handleRun)
 	mux.HandleFunc("/api/reset", srv.handleReset)
@@ -326,4 +329,51 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"state":   s.machine.GetState(),
 	})
+}
+
+func (s *Server) handlePorts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ports, err := flasher.ListPorts()
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"ports":   []flasher.PortInfo{},
+		})
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]any{
+		"success": true,
+		"ports":   ports,
+	})
+}
+
+func (s *Server) handleFlash(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Port   string `json:"port"`
+		Baud   int    `json:"baud"`
+		Source string `json:"source"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	if req.Port == "" {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"message": "Kein serieller Port angegeben.",
+		})
+		return
+	}
+
+	res := flasher.FlashProgram(req.Port, req.Baud, req.Source)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }

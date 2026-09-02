@@ -1,5 +1,6 @@
 <script>
   import { cpu } from '../stores/cpuStore.svelte.js';
+  import FlashModal from './FlashModal.svelte';
 
   const PRESETS = {
     matrix_bounce: `// ============================================================
@@ -139,6 +140,8 @@ daten[5] = 4;
     downloadFile(output, 'relais_programm.txt');
   }
 
+  let showFlashModal = $state(false);
+
   function downloadFile(content, filename) {
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -149,6 +152,8 @@ daten[5] = 4;
     URL.revokeObjectURL(url);
   }
 </script>
+
+<FlashModal bind:isOpen={showFlashModal} codeToFlash={codeText} />
 
 <div class="tab-pane active" id="tab-editor">
   <div class="editor-toolbar">
@@ -164,6 +169,9 @@ daten[5] = 4;
       </select>
     </div>
     <div class="editor-actions">
+      <button class="btn btn-warning" onclick={() => showFlashModal = true} title="Maschinencode direkt auf Arduino Mega flashen">
+        🚀 Auf Arduino flashen
+      </button>
       <button class="btn-subtle" onclick={convertFormat} title="Zwischen 'daten[n]=...' und Arduino Loader 'addr val' wechseln">
         🔄 Format konvertieren
       </button>

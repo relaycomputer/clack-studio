@@ -4,6 +4,7 @@
   import { EditorState } from '@codemirror/state';
   import { basicLanguage, clackTheme } from '../codemirror/basicLanguage.js';
   import { cpu } from '../stores/cpuStore.svelte.js';
+  import FlashModal from './FlashModal.svelte';
 
   const BASIC_PRESETS = {
     ping_pong: `REM ============================================================
@@ -300,10 +301,41 @@ LOOP:
     }
   }
 
+  let showFlashModal = $state(false);
+  let flashCode = $state('');
+
+  async function openFlashModal() {
+    if (!editorView) return;
+    const source = editorView.state.doc.toString();
+    if (!source.trim()) {
+      alert('Kein BASIC-Quellcode eingegeben.');
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: source, format: 'arduino' })
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        alert('Kompilierfehler vor dem Flashen:\n' + data.error);
+        return;
+      }
+      flashCode = data.code;
+      showFlashModal = true;
+    } catch (err) {
+      alert('Fehler beim Vorbereiten des Flash-Codes: ' + err.message);
+    }
+  }
+
   onMount(() => {
     initEditor();
   });
 </script>
+
+<FlashModal bind:isOpen={showFlashModal} codeToFlash={flashCode} />
 
 <div class="tab-pane active" id="tab-basic">
   <div class="editor-toolbar">
@@ -322,8 +354,11 @@ LOOP:
       </select>
     </div>
     <div class="editor-actions">
+      <button class="btn btn-warning" onclick={openFlashModal} title="Kompiliert und öffnet den Arduino Mega USB-Flasher">
+        🚀 Auf Arduino flashen
+      </button>
       <button class="btn btn-primary" onclick={() => compileBasic(true)} title="Kompiliert BASIC und lädt den Maschinencode sofort in den Simulator">
-        ⚡ Kompilieren & In Simulator laden
+        ⚡ In Simulator laden & Reset
       </button>
       <button class="btn btn-secondary" onclick={() => compileBasic(false)} title="Nur kompilieren und Assembler-Listing anzeigen">
         🔍 Nur Kompilieren
