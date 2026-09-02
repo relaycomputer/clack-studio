@@ -4,6 +4,7 @@
   import { settings } from '../stores/settingsStore.svelte.js';
 
   let canvas = $state(null);
+  let activePixels = $state(0);
   let animId = null;
 
   function render() {
@@ -17,6 +18,8 @@
 
     ctx.fillStyle = '#060a0f';
     ctx.fillRect(0, 0, w, h);
+
+    let litCount = 0;
 
     // Theme color configuration
     let onColor = '#ffc433';
@@ -55,6 +58,7 @@
             ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 
             if (isSet) {
+              litCount++;
               ctx.fillStyle = onColor;
               ctx.shadowColor = glowColor;
               ctx.shadowBlur = 4;
@@ -85,6 +89,7 @@
             ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 
             if (isSet) {
+              litCount++;
               ctx.fillStyle = onColor;
               ctx.shadowColor = glowColor;
               ctx.shadowBlur = 6;
@@ -98,10 +103,19 @@
         }
       }
     }
+
+    activePixels = litCount;
+  }
+
+  function drawTestPattern() {
+    const start = settings.matrixResolution === 32 ? 960 : 768;
+    const count = settings.matrixResolution === 32 ? 64 : 256;
+    for (let i = 0; i < count; i++) {
+      cpu.memory[start + i] = (i % 2 === 0) ? 0xAAAA : 0x5555;
+    }
   }
 
   onMount(() => {
-    // Continuous 60 FPS render loop for rock-solid visual updates
     function loop() {
       render();
       animId = requestAnimationFrame(loop);
@@ -138,13 +152,30 @@
     <div class="matrix-grid-overlay"></div>
   </div>
   <div class="matrix-footer">
-    <span>
-      {settings.matrixResolution === 32 
-        ? 'Modus: 4x 8x32/16x16 Matrix (64 Worte Framebuffer)' 
-        : 'Modus: 1-Bit Bitmap (16 Pixels / Wort) | 256 Worte Framebuffer'}
+    <span class="pixel-status-badge">
+      ⚡ {activePixels} LEDs aktiv
     </span>
-    <button class="btn-subtle" onclick={() => cpu.clearScreen(settings.matrixResolution === 32 ? 960 : 768, settings.matrixResolution === 32 ? 64 : 256)}>
-      Screen leeren
-    </button>
+    <div class="matrix-actions">
+      <button class="btn-subtle" onclick={drawTestPattern} title="Schachbrett-Testmuster in den Framebuffer schreiben">
+        Schachbrett
+      </button>
+      <button class="btn-subtle" onclick={() => cpu.clearScreen(settings.matrixResolution === 32 ? 960 : 768, settings.matrixResolution === 32 ? 64 : 256)}>
+        Leeren
+      </button>
+    </div>
   </div>
 </div>
+
+<style>
+  .matrix-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .pixel-status-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-color);
+  }
+</style>

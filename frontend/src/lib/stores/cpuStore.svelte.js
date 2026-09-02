@@ -378,22 +378,26 @@ export class CPUStore {
     this.isRunning = true;
     this.halted = false;
 
-    const intervalMs = Math.max(1, Math.round(1000 / settings.speedHz));
-
     const loop = () => {
       if (!this.isRunning) return;
 
-      if (settings.speedHz >= 500) {
-        // High speed burst
-        for (let i = 0; i < 200; i++) {
-          if (!this.step()) {
-            this.pause();
-            return;
-          }
-        }
+      const hz = settings.speedHz;
+      let stepsPerBatch = 1;
+      let intervalMs = 20;
+
+      if (hz >= 500) {
+        stepsPerBatch = 300;
+        intervalMs = 8;
+      } else if (hz >= 100) {
+        stepsPerBatch = Math.max(1, Math.round(hz / 20));
+        intervalMs = 20;
       } else {
-        const ok = this.step();
-        if (!ok) {
+        stepsPerBatch = 1;
+        intervalMs = Math.max(10, Math.round(1000 / hz));
+      }
+
+      for (let i = 0; i < stepsPerBatch; i++) {
+        if (!this.step()) {
           this.pause();
           return;
         }
