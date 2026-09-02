@@ -266,16 +266,18 @@
                   </select>
                 </div>
                 <div class="editor-actions">
+                  <button id="btn-convert-format" class="btn-subtle" title="Zwischen 'daten[n]=...' und Arduino Loader 'addr val' wechseln">🔄 Format konvertieren</button>
                   <button id="btn-load-prog" class="btn btn-primary">⚡ In Simulator laden & Reset</button>
-                  <button id="btn-export-txt" class="btn btn-subtle">📥 Exportieren (.txt)</button>
+                  <button id="btn-export-arduino" class="btn btn-subtle" title="Export für Arduino upload.py (addr val / CLR)">📥 Arduino-Format</button>
+                  <button id="btn-export-txt" class="btn btn-subtle" title="Export als C-Array daten[n]=...">📥 C-Array Format</button>
                 </div>
               </div>
 
               <div class="editor-container">
-                <textarea id="code-editor" spellcheck="false" placeholder="// Hier Code eingeben (z.B. daten[0] = 0x1400; daten[1] = 100;)"></textarea>
+                <textarea id="code-editor" spellcheck="false" placeholder="// Unterstützt beide Formate:&#10;// 1) Arduino Loader Format:   0 0x4000   oder   CLR&#10;// 2) C-Array Format:           daten[0] = 0x4000;"></textarea>
               </div>
               <div class="editor-status" id="editor-status">
-                Bereit zum Laden.
+                Unterstützt 'daten[n] = ...' und Arduino Speichersubsystem Format ('0 0x4000' / 'CLR').
               </div>
             </div>
 

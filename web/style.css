@@ -217,8 +217,9 @@ body {
 /* Grid Layout */
 .main-grid {
   display: grid;
-  grid-template-columns: 460px 1fr;
+  grid-template-columns: minmax(440px, 490px) 1fr;
   gap: 16px;
+  align-items: start;
 }
 
 @media (max-width: 1200px) {
@@ -231,12 +232,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .right-column {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 /* Panels */
@@ -246,6 +250,8 @@ body {
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .panel-header {
@@ -312,8 +318,10 @@ body {
 }
 
 #matrix-canvas {
-  width: 384px;
-  height: 384px;
+  width: 100%;
+  max-width: 384px;
+  aspect-ratio: 1;
+  height: auto;
   image-rendering: pixelated;
   background: #070a0e;
   border-radius: 4px;
@@ -408,24 +416,25 @@ body {
 /* Bit Scale Ruler */
 .bit-ruler-row {
   display: grid;
-  grid-template-columns: 110px 1fr 90px;
+  grid-template-columns: 85px 1fr 75px;
   align-items: center;
-  gap: 10px;
-  padding: 0 10px 4px 10px;
+  gap: 8px;
+  padding: 0 8px 4px 8px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 8.5px;
   color: var(--text-muted);
   letter-spacing: 0.5px;
+  box-sizing: border-box;
 }
 
 .ruler-scale {
   display: flex;
   justify-content: space-between;
-  padding: 0 6px;
+  padding: 0 4px;
 }
 
 .ruler-group {
-  width: 48px;
+  width: 38px;
   text-align: center;
 }
 
@@ -440,19 +449,22 @@ body {
 .bus-display-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
+  box-sizing: border-box;
 }
 
 .led-bar-row {
   display: grid;
-  grid-template-columns: 110px 1fr 90px;
+  grid-template-columns: 85px 1fr 75px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: #0e141c;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border-radius: 6px;
   border: 1px solid #1f2a38;
   transition: border-color 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .led-bar-row:hover {
@@ -464,47 +476,50 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-right: 4px;
+  padding-right: 2px;
+  overflow: hidden;
 }
 
 .led-label .name {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-bright);
   font-family: var(--font-display);
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .led-label .badge {
-  font-size: 8px;
+  font-size: 7.5px;
   font-family: var(--font-mono);
   background: #17212e;
   border: 1px solid #28374a;
   color: var(--text-muted);
-  padding: 1px 4px;
+  padding: 1px 3px;
   border-radius: 3px;
 }
 
 .led-array {
   display: flex;
-  gap: 8px;
+  gap: 5px;
   justify-content: space-between;
   align-items: center;
   background: #070a0e;
-  padding: 4px 6px;
+  padding: 3px 5px;
   border-radius: 4px;
   border: 1px solid #141c26;
+  min-width: 0;
 }
 
 .led-nibble {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
 }
 
 .led {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background-color: var(--accent-led-off);
   border: 1px solid rgba(0, 0, 0, 0.6);
@@ -530,15 +545,17 @@ body {
   align-items: flex-end;
   justify-content: center;
   background: #090e14;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid #182230;
-  min-height: 32px;
+  min-height: 28px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .led-info .primary-val {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--text-bright);
   line-height: 1.2;
@@ -546,13 +563,13 @@ body {
 
 .led-info .secondary-val {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 8.5px;
   color: var(--text-muted);
   line-height: 1.1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80px;
+  max-width: 65px;
 }
 
 .led-info .secondary-val.highlight-cmd {

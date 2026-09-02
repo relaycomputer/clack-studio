@@ -1117,6 +1117,14 @@ class ClackStudioApp {
       this.exportHistoryCSV();
     });
 
+    document.getElementById('btn-export-arduino').addEventListener('click', () => {
+      this.exportArduinoFormat();
+    });
+
+    document.getElementById('btn-convert-format').addEventListener('click', () => {
+      this.convertEditorFormat();
+    });
+
     document.getElementById('btn-scroll-to-pc').addEventListener('click', () => {
       this.scrollToPC();
     });
@@ -1152,11 +1160,86 @@ class ClackStudioApp {
     this.renderDisassembler();
   }
 
-  exportCodeTxt() {
-    let output = "// Exportiert aus Clack-Studio\n\n";
+  convertEditorFormat() {
+    const text = this.codeEditor.value;
+    const isArrayFormat = text.includes('daten[');
+    const lines = text.split('\n');
+    let converted = [];
+
+    if (isArrayFormat) {
+      // Convert daten[123] = 0x1400; -> 123 0x1400
+      converted.push('// Konvertiert in Arduino-Loader Format (addr val)');
+      converted.push('CLR');
+      converted.push('');
+      const regex = /daten\[\s*(\d+)\s*\]\s*=\s*(0x[0-9a-fA-F]+|\d+)\s*;\s*(?:\/\/(.*))?/i;
+      for (let raw of lines) {
+        let match = raw.match(regex);
+        if (match) {
+          let addr = match[1];
+          let val = match[2];
+          let comment = match[3] ? ` // ${match[3].trim()}` : '';
+          converted.push(`${addr} ${val}${comment}`);
+        } else if (raw.trim().startsWith('//') || raw.trim().startsWith('#')) {
+          converted.push(raw);
+        } else if (!raw.trim()) {
+          converted.push('');
+        }
+      }
+      this.codeEditor.value = converted.join('\n');
+      this.editorStatus.innerText = "In Arduino-Loader Format ('addr val') konvertiert.";
+    } else {
+      // Convert 123 0x1400 -> daten[123] = 0x1400;
+      converted.push('// Konvertiert in C-Array Format');
+      converted.push('');
+      const regex = /^\s*(\d+)\s+(0x[0-9a-fA-F]+|\d+)\s*(?:\/\/(.*))?/i;
+      for (let raw of lines) {
+        let trimmed = raw.trim();
+        if (trimmed.toUpperCase() === 'CLR' || trimmed.toUpperCase() === 'RUN') continue;
+        let match = raw.match(regex);
+        if (match) {
+          let addr = match[1];
+          let val = match[2];
+          let comment = match[3] ? ` // ${match[3].trim()}` : '';
+          converted.push(`daten[${addr}] = ${val};${comment}`);
+        } else if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('#')) {
+          converted.push(raw);
+        } else if (!trimmed) {
+          converted.push('');
+        }
+      }
+      this.codeEditor.value = converted.join('\n');
+      this.editorStatus.innerText = "In C-Array Format ('daten[n] = ...;') konvertiert.";
+    }
+  }
+
+  exportArduinoFormat() {
+    let output = "// Maschinencode fuer Arduino Relais-Speichersubsystem & upload.py\nCLR\n\n";
     for (let i = 0; i < MEM_SIZE; i++) {
       if (this.cpu.memory[i] !== 0) {
-        output += `daten[${i}] = 0x${this.cpu.memory[i].toString(16).toUpperCase().padStart(4, '0')};\n`;
+        const val = this.cpu.memory[i];
+        const hexVal = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        const opVal = i + 1 < MEM_SIZE ? this.cpu.memory[i+1] : 0;
+        const dis = this.cpu.disassembleInstruction(val, opVal);
+        output += `${i} ${hexVal} // ${dis.text}\n`;
+      }
+    }
+    output += "\nRUN\n";
+    const blob = new Blob([output], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'relais_arduino_loader.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  exportCodeTxt() {
+    let output = "// Exportiert aus Clack-Studio (C-Array Format)\n\n";
+    for (let i = 0; i < MEM_SIZE; i++) {
+      if (this.cpu.memory[i] !== 0) {
+        const val = this.cpu.memory[i];
+        const hexVal = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        output += `daten[${i}] = ${hexVal};\n`;
       }
     }
     const blob = new Blob([output], { type: 'text/plain' });
