@@ -777,6 +777,58 @@ html, body {
   flex-shrink: 0;
 }
 
+.file-operations-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 20, 27, 0.8);
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.file-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 4px 10px;
+  border-radius: 5px;
+  color: var(--text-bright);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.file-badge:hover {
+  background: #182230;
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.file-badge .file-icon {
+  font-size: 12px;
+}
+
+.file-badge .file-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-badge .file-edit-icon {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.file-badge:hover .file-edit-icon {
+  opacity: 1;
+}
+
 .preset-selector {
   display: flex;
   align-items: center;

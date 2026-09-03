@@ -210,7 +210,9 @@ LOOP:
 
   let editorContainer = $state(null);
   let editorView = $state(null);
+  let fileInput = $state(null);
 
+  let currentFileName = $state('ping_pong.bas');
   let selectedPreset = $state('ping_pong');
   let statusMessage = $state('⚡ Clack-BASIC Cross-Compiler bereit. Unterstützt CodeMirror 6 Syntax-Highlighting!');
   let statusType = $state('');
@@ -242,9 +244,100 @@ LOOP:
       editorView.dispatch({
         changes: { from: 0, to: editorView.state.doc.length, insert: BASIC_PRESETS[key] }
       });
+      currentFileName = `${key}.bas`;
       statusType = '';
-      statusMessage = `BASIC-Vorlage '${key}' geladen. Bereit zum Kompilieren.`;
+      statusMessage = `BASIC-Vorlage '${key}.bas' geladen. Bereit zum Kompilieren.`;
     }
+  }
+
+  function newFile() {
+    const defaultTemplate = `REM ============================================================
+REM ⚡ Clack-BASIC: Neues Programm
+REM ============================================================
+
+CLS
+PRINT "Hallo Relais-Computer!"
+
+HALT
+`;
+    currentFileName = 'unnamed.bas';
+    selectedPreset = '';
+    if (editorView) {
+      editorView.dispatch({
+        changes: { from: 0, to: editorView.state.doc.length, insert: defaultTemplate }
+      });
+    }
+    statusType = '';
+    statusMessage = '📄 Neues BASIC-Programm erstellt (unnamed.bas).';
+  }
+
+  function openFilePicker() {
+    if (fileInput) {
+      fileInput.value = '';
+      fileInput.click();
+    }
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result;
+      if (typeof content === 'string' && editorView) {
+        editorView.dispatch({
+          changes: { from: 0, to: editorView.state.doc.length, insert: content }
+        });
+        currentFileName = file.name;
+        selectedPreset = '';
+        statusType = 'success';
+        statusMessage = `📂 '${file.name}' geladen (${content.length} Zeichen).`;
+        compileBasic(true);
+      }
+    };
+    reader.onerror = () => {
+      statusType = 'error';
+      statusMessage = `Fehler beim Lesen der Datei '${file.name}'.`;
+    };
+    reader.readAsText(file);
+  }
+
+  function saveFile() {
+    if (!editorView) return;
+    const content = editorView.state.doc.toString();
+    const fileName = currentFileName.endsWith('.bas') ? currentFileName : currentFileName + '.bas';
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    try {
+      localStorage.setItem('clack_basic_' + fileName, content);
+    } catch {}
+
+    statusType = 'success';
+    statusMessage = `💾 '${fileName}' erfolgreich gespeichert & heruntergeladen.`;
+  }
+
+  function saveFileAs() {
+    if (!editorView) return;
+    const newName = prompt('Dateiname für "Speichern unter":', currentFileName);
+    if (!newName || !newName.trim()) return;
+    currentFileName = newName.trim().endsWith('.bas') ? newName.trim() : newName.trim() + '.bas';
+    saveFile();
+  }
+
+  function renameFile() {
+    const newName = prompt('Programm umbenennen in:', currentFileName);
+    if (!newName || !newName.trim()) return;
+    currentFileName = newName.trim().endsWith('.bas') ? newName.trim() : newName.trim() + '.bas';
+    statusType = '';
+    statusMessage = `Programm umbenannt in '${currentFileName}'.`;
   }
 
   async function compileBasic(loadIntoSim = false) {
@@ -362,22 +455,56 @@ LOOP:
 
 <FlashModal bind:isOpen={showFlashModal} codeToFlash={flashCode} />
 
+<input 
+  type="file" 
+  bind:this={fileInput} 
+  accept=".bas,.txt,.clack" 
+  onchange={handleFileSelect} 
+  style="display: none;" 
+/>
+
 <div class="tab-pane active" id="tab-basic">
   <div class="editor-toolbar">
+    <div class="file-operations-group">
+      <button class="btn-subtle" onclick={newFile} title="Neues leeres BASIC-Programm erstellen">
+        📄 Neu
+      </button>
+      <button class="btn-subtle" onclick={openFilePicker} title="BASIC-Datei von Computer öffnen (.bas, .txt)">
+        📂 Öffnen...
+      </button>
+      <button class="btn-subtle" onclick={saveFile} title="Aktuelles Programm auf Festplatte speichern">
+        💾 Speichern
+      </button>
+      <button class="btn-subtle" onclick={saveFileAs} title="Unter neuem Dateinamen speichern...">
+        💾 Als...
+      </button>
+      <button 
+        class="file-badge" 
+        onclick={renameFile} 
+        title="Klicken zum Umbenennen der Datei"
+      >
+        <span class="file-icon">📜</span>
+        <span class="file-name">{currentFileName}</span>
+        <span class="file-edit-icon" title="Umbenennen">✏️</span>
+      </button>
+    </div>
+
     <div class="preset-selector">
-      <label for="basic-preset-select">BASIC Vorlage:</label>
+      <label for="basic-preset-select">Vorlagen:</label>
       <select 
         id="basic-preset-select"
         value={selectedPreset} 
         onchange={(e) => loadPreset(e.target.value)}
       >
-        <option value="ping_pong">🏓 Autonomes Ping-Pong (ping_pong.bas)</option>
-        <option value="graphics_demo">🎨 4-Display Matrix Grafik (graphics_demo.bas)</option>
-        <option value="math_test">🔢 Mathematik & Logik Test (math_test.bas)</option>
-        <option value="data_test">📋 DATA / READ / RESTORE (data_test.bas)</option>
+        <option value="" disabled selected={!selectedPreset}>-- Vorlage wählen --</option>
+        <option value="ping_pong">🏓 Autonomes Ping-Pong</option>
+        <option value="graphics_demo">🎨 4-Display Matrix Grafik</option>
+        <option value="math_test">🔢 Mathematik & Logik Test</option>
+        <option value="data_test">📋 DATA / READ / RESTORE</option>
         <option value="matrix_bounce_basic">✨ Bouncing Pixel Animation</option>
       </select>
     </div>
+
     <div class="editor-actions">
       <button class="btn btn-warning" onclick={openFlashModal} title="Kompiliert und öffnet den Arduino Mega USB-Flasher">
         🚀 Auf Arduino flashen

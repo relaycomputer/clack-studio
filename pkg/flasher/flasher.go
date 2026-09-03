@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"go.bug.st/serial"
-	"go.bug.st/serial/enumerator"
 )
 
 // PortInfo describes a detected serial communication port
@@ -31,28 +30,23 @@ type FlashResult struct {
 
 // ListPorts discovers all available serial ports on the host
 func ListPorts() ([]PortInfo, error) {
-	ports, err := enumerator.GetDetailedPortsList()
+	ports, err := serial.GetPortsList()
 	if err != nil {
 		return nil, fmt.Errorf("Fehler beim Abfragen der seriellen Ports: %w", err)
 	}
 
 	var result []PortInfo
-	for _, p := range ports {
+	for _, name := range ports {
 		isArduino := false
-		desc := "Serieller Port"
-		if p.IsUSB {
-			desc = fmt.Sprintf("USB VID:%s PID:%s", p.VID, p.PID)
-			// Common Arduino VID/PID patterns
-			if strings.EqualFold(p.VID, "2341") || strings.EqualFold(p.VID, "1A86") || strings.EqualFold(p.VID, "0403") || strings.Contains(strings.ToLower(p.Product), "arduino") {
-				isArduino = true
-				desc = "Arduino Mega / USB-Serial (" + p.Product + ")"
-			}
+		lower := strings.ToLower(name)
+		if strings.Contains(lower, "ttyacm") || strings.Contains(lower, "ttyusb") || strings.Contains(lower, "usbmodem") || strings.Contains(lower, "usbserial") || strings.Contains(lower, "com") {
+			isArduino = true
 		}
 
 		result = append(result, PortInfo{
-			Name:        p.Name,
-			IsUSB:       p.IsUSB,
-			Description: desc,
+			Name:        name,
+			IsUSB:       true,
+			Description: "Serieller Port (" + name + ")",
 			IsArduino:   isArduino,
 		})
 	}
