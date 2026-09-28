@@ -8,6 +8,8 @@ export class SettingsStore {
   soundEnabled = $state(true);
   speedHz = $state(500);
   activeTab = $state('tab-basic');
+  sharedAsmCode = $state('');
+  sharedBasicCode = $state('');
 
   setTheme(newTheme) {
     this.theme = newTheme;
@@ -31,6 +33,16 @@ export class SettingsStore {
 
   setActiveTab(tabId) {
     this.activeTab = tabId;
+  }
+
+  switchToAsm(code) {
+    if (code) this.sharedAsmCode = code;
+    this.activeTab = 'tab-asm';
+  }
+
+  switchToBasic(code) {
+    if (code) this.sharedBasicCode = code;
+    this.activeTab = 'tab-basic';
   }
 }
 

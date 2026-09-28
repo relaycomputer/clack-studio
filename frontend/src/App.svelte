@@ -4,6 +4,7 @@
   import Frontpanel from './lib/components/Frontpanel.svelte';
   import TransportControls from './lib/components/TransportControls.svelte';
   import BasicStudio from './lib/components/BasicStudio.svelte';
+  import AssemblerStudio from './lib/components/AssemblerStudio.svelte';
   import MachineCodeStudio from './lib/components/MachineCodeStudio.svelte';
   import Disassembler from './lib/components/Disassembler.svelte';
   import RamHeatmap from './lib/components/RamHeatmap.svelte';
@@ -33,7 +34,14 @@
             class:active={settings.activeTab === 'tab-basic'}
             onclick={() => settings.setActiveTab('tab-basic')}
           >
-            📜 Clack-BASIC Compiler
+            📜 BASIC Studio
+          </button>
+          <button 
+            class="tab-btn" 
+            class:active={settings.activeTab === 'tab-asm'}
+            onclick={() => settings.setActiveTab('tab-asm')}
+          >
+            ⚡ Assembler Studio
           </button>
           <button 
             class="tab-btn" 
@@ -61,13 +69,15 @@
             class:active={settings.activeTab === 'tab-history'}
             onclick={() => settings.setActiveTab('tab-history')}
           >
-            📊 Logic Analyzer History
+            📊 Logic Analyzer
           </button>
         </div>
 
         <div class="tab-contents">
           {#if settings.activeTab === 'tab-basic'}
             <BasicStudio />
+          {:else if settings.activeTab === 'tab-asm'}
+            <AssemblerStudio />
           {:else if settings.activeTab === 'tab-editor'}
             <MachineCodeStudio />
           {:else if settings.activeTab === 'tab-disasm'}

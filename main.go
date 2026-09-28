@@ -16,7 +16,9 @@ import (
 	"clack-studio/pkg/emulator"
 	"clack-studio/pkg/flasher"
 
+	"clack-basic/pkg/assembler"
 	"clack-basic/pkg/codegen"
+	"clack-basic/pkg/decompiler"
 	"clack-basic/pkg/emitter"
 	"clack-basic/pkg/lexer"
 	"clack-basic/pkg/parser"
@@ -69,6 +71,8 @@ func main() {
 	mux.HandleFunc("/api/load", srv.handleLoad)
 	mux.HandleFunc("/api/compile", srv.handleCompile)
 	mux.HandleFunc("/api/compile-and-load", srv.handleCompileAndLoad)
+	mux.HandleFunc("/api/assemble", srv.handleAssemble)
+	mux.HandleFunc("/api/decompile", srv.handleDecompile)
 	mux.HandleFunc("/api/ports", srv.handlePorts)
 	mux.HandleFunc("/api/flash", srv.handleFlash)
 	mux.HandleFunc("/api/step", srv.handleStep)
@@ -399,3 +403,106 @@ func (s *Server) handleFlash(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
 }
+
+func (s *Server) handleAssemble(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Source string `json:"source"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	startTime := time.Now()
+	asm := assembler.NewAssembler()
+	mem, used, err := asm.Assemble(req.Source)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   fmt.Sprintf("Assembler-Fehler: %v", err),
+		})
+		return
+	}
+
+	usedWords := 0
+	for _, u := range used {
+		if u {
+			usedWords++
+		}
+	}
+
+	arduinoCode := asm.FormatArduinoOutput()
+	carrayCode := asm.FormatCArrayOutput()
+	duration := time.Since(startTime)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"success":     true,
+		"arduinoCode": arduinoCode,
+		"carrayCode":  carrayCode,
+		"memory":      mem,
+		"used":        used,
+		"usedWords":   usedWords,
+		"totalWords":  codegen.MaxMemorySize,
+		"durationMs":  float64(duration.Microseconds()) / 1000.0,
+	})
+}
+
+func (s *Server) handleDecompile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Source string `json:"source"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	startTime := time.Now()
+	decomp := decompiler.NewDecompiler()
+
+	err := decomp.LoadSource(req.Source)
+	if err != nil {
+		// Try assembling as ASM first
+		asm := assembler.NewAssembler()
+		mem, used, asmErr := asm.Assemble(req.Source)
+		if asmErr != nil {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{
+				"success": false,
+				"error":   fmt.Sprintf("Dekompilier-Fehler: %v", err),
+			})
+			return
+		}
+		decomp.SetMemory(mem, used[:])
+	}
+
+	basicCode, err := decomp.Decompile()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"success": false,
+			"error":   fmt.Sprintf("Dekompilier-Fehler: %v", err),
+		})
+		return
+	}
+
+	duration := time.Since(startTime)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"success":    true,
+		"basicCode":  basicCode,
+		"durationMs": float64(duration.Microseconds()) / 1000.0,
+	})
+}
+

@@ -4,6 +4,7 @@
   import { EditorState } from '@codemirror/state';
   import { basicLanguage, clackTheme } from '../codemirror/basicLanguage.js';
   import { cpu } from '../stores/cpuStore.svelte.js';
+  import { settings } from '../stores/settingsStore.svelte.js';
   import FlashModal from './FlashModal.svelte';
 
   const BASIC_PRESETS = {
@@ -447,9 +448,55 @@ HALT
     }
   }
 
+  async function convertToAssembly() {
+    if (!editorView) return;
+    const source = editorView.state.doc.toString();
+    if (!source.trim()) {
+      alert('Kein BASIC-Quellcode vorhanden.');
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: source, format: 'listing' })
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        alert('Kompilierfehler:\n' + data.error);
+        return;
+      }
+      settings.switchToAsm(data.listing);
+    } catch (err) {
+      alert('Fehler beim Konvertieren nach Assembler: ' + err.message);
+    }
+  }
+
+  $effect(() => {
+    if (settings.sharedBasicCode && editorView) {
+      editorView.dispatch({
+        changes: { from: 0, to: editorView.state.doc.length, insert: settings.sharedBasicCode }
+      });
+      currentFileName = 'decompiled.bas';
+      selectedPreset = '';
+      statusType = 'success';
+      statusMessage = '🔄 BASIC-Code aus Assembler/Maschinencode dekompiliert und geladen!';
+      settings.sharedBasicCode = '';
+    }
+  });
+
   onMount(() => {
     initEditor();
-    compileBasic(true);
+    if (settings.sharedBasicCode && editorView) {
+      editorView.dispatch({
+        changes: { from: 0, to: editorView.state.doc.length, insert: settings.sharedBasicCode }
+      });
+      currentFileName = 'decompiled.bas';
+      settings.sharedBasicCode = '';
+    } else {
+      compileBasic(true);
+    }
   });
 </script>
 
@@ -511,6 +558,9 @@ HALT
       </button>
       <button class="btn btn-primary" onclick={() => compileBasic(true)} title="Kompiliert BASIC und lädt den Maschinencode sofort in den Simulator">
         ⚡ In Simulator laden & Reset
+      </button>
+      <button class="btn btn-secondary" onclick={convertToAssembly} title="Kompiliert dieses BASIC-Programm in Assembler und öffnet es im Assembler Studio!">
+        🔄 Zu Assembler
       </button>
       <button class="btn btn-secondary" onclick={() => compileBasic(false)} title="Nur kompilieren und Assembler-Listing anzeigen">
         🔍 Nur Kompilieren
