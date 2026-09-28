@@ -19,26 +19,37 @@ go build -o /tmp/clack-build/clack-studio .
 GOOS=windows GOARCH=amd64 go build -o /tmp/clack-build/clack-studio.exe .
 GOOS=darwin GOARCH=arm64 go build -o /tmp/clack-build/clack-studio-darwin-arm64 .
 
-echo "==> 3. Creating Release $TAG on Forgejo..."
-RESP=$(curl -s -X POST \
+# Copy to local bin/ permanently as well
+mkdir -p bin
+cp /tmp/clack-build/clack-studio bin/
+cp /tmp/clack-build/clack-studio.exe bin/
+cp /tmp/clack-build/clack-studio-darwin-arm64 bin/
+
+echo "==> 3. Creating/Fetching Release $TAG on Forgejo..."
+RESP=$(curl -4 -s -X POST \
   -H "Authorization: token $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"tag_name\": \"$TAG\", \"name\": \"$TITLE\", \"body\": \"Automated release build for $TAG with Linux, Windows x64 and macOS ARM64 (Apple Silicon) binaries.\", \"draft\": false}" \
   "$API_URL/releases")
 
-REL_ID=$(echo "$RESP" | jq -r .id)
-echo "==> Release created with ID: $REL_ID"
+REL_ID=$(echo "$RESP" | jq -r .id 2>/dev/null || echo "null")
+if [ "$REL_ID" = "null" ] || [ -z "$REL_ID" ]; then
+  echo "Release might already exist, fetching existing ID for tag $TAG..."
+  REL_ID=$(curl -4 -s -H "Authorization: token $TOKEN" "$API_URL/releases/tags/$TAG" | jq -r .id)
+fi
+
+echo "==> Release ID: $REL_ID"
 
 echo "==> 4. Uploading Assets..."
-curl -s -X POST -H "Authorization: token $TOKEN" \
+curl -4 -s -X POST -H "Authorization: token $TOKEN" \
   -F "attachment=@/tmp/clack-build/clack-studio.exe;filename=clack-studio.exe" \
   "$API_URL/releases/$REL_ID/assets?name=clack-studio.exe" >/dev/null
 
-curl -s -X POST -H "Authorization: token $TOKEN" \
+curl -4 -s -X POST -H "Authorization: token $TOKEN" \
   -F "attachment=@/tmp/clack-build/clack-studio;filename=clack-studio" \
   "$API_URL/releases/$REL_ID/assets?name=clack-studio" >/dev/null
 
-curl -s -X POST -H "Authorization: token $TOKEN" \
+curl -4 -s -X POST -H "Authorization: token $TOKEN" \
   -F "attachment=@/tmp/clack-build/clack-studio-darwin-arm64;filename=clack-studio-darwin-arm64" \
   "$API_URL/releases/$REL_ID/assets?name=clack-studio-darwin-arm64" >/dev/null
 

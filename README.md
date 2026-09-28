@@ -12,11 +12,12 @@
    * **Dummy-Resistente Single-Binary:** Das gesamte Frontend ist per `//go:embed` fest in der Go-Binary verankert. Kein Node.js oder npm für den Anwender erforderlich!
    * **PWA Support:** Installierbar als eigenständige Desktop-/Tablet-App mit 100% Offline-Fähigkeit via Service Worker.
 
-2. **CodeMirror 6 Clack-BASIC IDE:**
-   * Echtes **Syntax-Highlighting** für BASIC (`LET`, `IF`, `FOR..NEXT`, `PSET`, `CLS`, `DATA/READ`, etc.).
-   * Integrierte Vorlagen: 🏓 *Autonomes Ping-Pong*, 🎨 *4-Display Grafik-Demo*, 🔢 *Mathe & Logik*, 📋 *DATA/READ*.
+2. **CodeMirror 6 Clack-BASIC & Assembler IDE:**
+   * **BASIC Studio:** Vollständige IDE mit Syntax-Highlighting (`LET`, `IF`, `FOR..NEXT`, `PSET`, `CLS`, `DATA/READ`), Vorlagen (🏓 Ping-Pong, 🎨 4-Display Demo, 🔢 Mathe & Logik) und Dateiverwaltung (Neu, Öffnen, Speichern, Speichern unter, Umbenennen).
+   * **Assembler Studio:** Eigener Tab für 16-Bit Relais-Assembler (`LDA`, `LDAM`, `STAM`, `ADD`, `BA`, `BZ`, `CALL`, `RET`, etc.) mit Syntax-Highlighting, Labels und Direkt-Simulation.
+   * **Zwei-Wege-Decompiler (Roundtrip):** 1-Klick-Konvertierung von Maschinencode/Assembler $\leftrightarrow$ Clack-BASIC!
    * **1-Klick Kompilieren & Sofortausführung** (`⚡ In Simulator laden & Reset`) in $<0.1\text{ ms}$.
-   * Live Assembler-Listing & Disassembly Drawer.
+   * **USB-Flasher:** Direktes Flashen auf den Arduino Mega Speicher-Controller aus dem Browser heraus.
 
 3. **64×64 & 32×32 LED Dot-Matrix Display:**
    * **32×32 (4x Hardware Matrix):** Memory-Mapped ab `0x03C0` (`960`..`1023`).
