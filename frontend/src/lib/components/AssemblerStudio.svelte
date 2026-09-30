@@ -7,6 +7,7 @@
   import { cpu } from '../stores/cpuStore.svelte.js';
   import { settings } from '../stores/settingsStore.svelte.js';
   import FlashModal from './FlashModal.svelte';
+  import ImportArrayModal from './ImportArrayModal.svelte';
 
   const ASM_PRESETS = {
     matrix_bounce: `; ============================================================
@@ -234,24 +235,49 @@ LOOP:
 `);
   }
 
+  let showImportModal = $state(false);
+
   function openFilePicker() {
     fileInputEl?.click();
   }
 
-  function handleFileSelect(e) {
+  async function handleFileSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     currentFileName = file.name;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const text = event.target?.result;
       if (typeof text === 'string') {
+        const isArrayFile = text.includes('daten[') || text.includes('{') || file.name.endsWith('.txt') || file.name.endsWith('.ino') || file.name.endsWith('.c');
+        if (isArrayFile && !file.name.endsWith('.asm')) {
+          try {
+            const resp = await fetch('/api/disasm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ source: text })
+            });
+            const data = await resp.json();
+            if (data.success && data.asmCode) {
+              setEditorContent(data.asmCode);
+              currentFileName = file.name.replace(/\.[^/.]+$/, "") + ".asm";
+              return;
+            }
+          } catch (_) {}
+        }
         setEditorContent(text);
       }
     };
     reader.readAsText(file);
     e.target.value = '';
+  }
+
+  function handleImportResult(result) {
+    if (result && result.code) {
+      setEditorContent(result.code);
+      currentFileName = 'imported_array.asm';
+    }
   }
 
   function saveFile() {
@@ -377,9 +403,12 @@ LOOP:
         <button class="tool-btn file-btn" onclick={openFilePicker} title="Assembler-Datei von Festplatte oeffnen">
           📂 Oeffnen...
         </button>
+        <button class="tool-btn file-btn import-btn" onclick={() => showImportModal = true} title="C-Arrays, daten[...] Zuweisungen oder Arduino .ino importieren & in Assembler umwandeln">
+          📥 Array importieren
+        </button>
         <input 
           type="file" 
-          accept=".asm,.txt,.s,.inc" 
+          accept=".asm,.txt,.s,.inc,.c,.cpp,.h,.ino,.vhd" 
           bind:this={fileInputEl} 
           onchange={handleFileSelect} 
           style="display: none;" 
@@ -482,6 +511,13 @@ LOOP:
   <FlashModal 
     bind:isOpen={isFlashModalOpen}
     initialSource={assembledArduinoCode}
+  />
+
+  <!-- Import Array Modal -->
+  <ImportArrayModal 
+    bind:isOpen={showImportModal}
+    targetMode="asm"
+    onImport={handleImportResult}
   />
 </div>
 

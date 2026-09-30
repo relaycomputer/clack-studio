@@ -89,12 +89,16 @@ export class CPUStore {
     let clean = text.replace(/\/\*[\s\S]*?\*\//g, '');
     const lines = clean.split('\n');
 
-    const regexArray = /daten\[\s*(\d+)\s*\]\s*=\s*(0x[0-9a-fA-F]+|\d+)\s*;/i;
-    const regexSimple = /^\s*(\d+)\s+(0x[0-9a-fA-F]+|\d+)/i;
+    const regexArray = /(?:daten|array|mem|memory|ram|rom|buffer)\s*\[\s*(\d+)\s*\]\s*=\s*(0x[0-9a-fA-F]+|\d+)\s*;?/i;
+    const regexC99 = /\[\s*(\d+)\s*\]\s*=\s*(0x[0-9a-fA-F]+|\d+)\s*,?/i;
+    const regexVhdl = /(\d+)\s*=>\s*(?:x"([0-9a-fA-F]+)"|(0x[0-9a-fA-F]+|\d+))\s*,?/i;
+    const regexSimple = /^\s*(\d+)[\s:]+(0x[0-9a-fA-F]+|\d+)/i;
+
+    let hasIndexed = false;
 
     for (let rawLine of lines) {
-      let line = rawLine.replace(/\/\/.*$/, '').trim();
-      if (!line || line.toUpperCase() === 'CLR') continue;
+      let line = rawLine.replace(/\/\/.*$/, '').replace(/--.*$/, '').trim();
+      if (!line || line.toUpperCase() === 'CLR' || line.toUpperCase() === 'RUN') continue;
 
       let match = line.match(regexArray);
       if (match) {
@@ -105,6 +109,36 @@ export class CPUStore {
         if (addr >= 0 && addr < MEM_SIZE) {
           newMem[addr] = val & 0xFFFF;
           count++;
+          hasIndexed = true;
+        }
+        continue;
+      }
+
+      match = line.match(regexC99);
+      if (match) {
+        let addr = parseInt(match[1], 10);
+        let val = match[2].toLowerCase().startsWith('0x')
+          ? parseInt(match[2].substring(2), 16)
+          : parseInt(match[2], 10);
+        if (addr >= 0 && addr < MEM_SIZE) {
+          newMem[addr] = val & 0xFFFF;
+          count++;
+          hasIndexed = true;
+        }
+        continue;
+      }
+
+      match = line.match(regexVhdl);
+      if (match) {
+        let addr = parseInt(match[1], 10);
+        let valStr = match[2] ? ('0x' + match[2]) : match[3];
+        let val = valStr.toLowerCase().startsWith('0x')
+          ? parseInt(valStr.substring(2), 16)
+          : parseInt(valStr, 10);
+        if (addr >= 0 && addr < MEM_SIZE) {
+          newMem[addr] = val & 0xFFFF;
+          count++;
+          hasIndexed = true;
         }
         continue;
       }
@@ -118,6 +152,36 @@ export class CPUStore {
         if (addr >= 0 && addr < MEM_SIZE) {
           newMem[addr] = val & 0xFFFF;
           count++;
+          hasIndexed = true;
+        }
+      }
+    }
+
+    // Fallback: sequential array block { 0x1400, 400, ... }
+    if (!hasIndexed) {
+      const startIdx = clean.search(/[{(\[]/);
+      const endIdx = clean.search(/[})\]][^})\]]*$/);
+      let blockContent = clean;
+      if (startIdx >= 0 && endIdx > startIdx) {
+        blockContent = clean.substring(startIdx + 1, endIdx);
+      }
+      const tokenRegex = /(?:0x[0-9a-fA-F]+|x"[0-9a-fA-F]+"|\b\d+\b)/g;
+      const tokens = blockContent.match(tokenRegex);
+      if (tokens) {
+        for (let i = 0; i < tokens.length && i < MEM_SIZE; i++) {
+          let token = tokens[i];
+          let val = 0;
+          if (token.toLowerCase().startsWith('x"')) {
+            val = parseInt(token.substring(2, token.length - 1), 16);
+          } else if (token.toLowerCase().startsWith('0x')) {
+            val = parseInt(token.substring(2), 16);
+          } else {
+            val = parseInt(token, 10);
+          }
+          if (!isNaN(val)) {
+            newMem[i] = val & 0xFFFF;
+            count++;
+          }
         }
       }
     }

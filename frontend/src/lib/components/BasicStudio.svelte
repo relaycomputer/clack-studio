@@ -6,6 +6,7 @@
   import { cpu } from '../stores/cpuStore.svelte.js';
   import { settings } from '../stores/settingsStore.svelte.js';
   import FlashModal from './FlashModal.svelte';
+  import ImportArrayModal from './ImportArrayModal.svelte';
 
   const BASIC_PRESETS = {
     ping_pong: `REM ============================================================
@@ -279,13 +280,51 @@ HALT
     }
   }
 
-  function handleFileSelect(e) {
+  let showImportModal = $state(false);
+
+  function handleImportResult(result) {
+    if (result && result.code && editorView) {
+      editorView.dispatch({
+        changes: { from: 0, to: editorView.state.doc.length, insert: result.code }
+      });
+      currentFileName = 'imported_decompile.bas';
+      selectedPreset = '';
+      statusType = 'success';
+      statusMessage = '📥 Array erfolgreich nach Clack-BASIC dekompiliert!';
+      compileBasic(true);
+    }
+  }
+
+  async function handleFileSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const content = ev.target?.result;
       if (typeof content === 'string' && editorView) {
+        const isArrayFile = content.includes('daten[') || content.includes('{') || file.name.endsWith('.txt') || file.name.endsWith('.ino') || file.name.endsWith('.c') || file.name.endsWith('.asm');
+        if (isArrayFile && !file.name.endsWith('.bas')) {
+          try {
+            const resp = await fetch('/api/decompile', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ source: content })
+            });
+            const data = await resp.json();
+            if (data.success && data.basicCode) {
+              editorView.dispatch({
+                changes: { from: 0, to: editorView.state.doc.length, insert: data.basicCode }
+              });
+              currentFileName = file.name.replace(/\.[^/.]+$/, "") + ".bas";
+              selectedPreset = '';
+              statusType = 'success';
+              statusMessage = `🔄 '${file.name}' automatisch nach BASIC dekompiliert!`;
+              compileBasic(true);
+              return;
+            }
+          } catch (_) {}
+        }
+
         editorView.dispatch({
           changes: { from: 0, to: editorView.state.doc.length, insert: content }
         });
@@ -502,10 +541,16 @@ HALT
 
 <FlashModal bind:isOpen={showFlashModal} codeToFlash={flashCode} />
 
+<ImportArrayModal 
+  bind:isOpen={showImportModal} 
+  targetMode="basic" 
+  onImport={handleImportResult} 
+/>
+
 <input 
   type="file" 
   bind:this={fileInput} 
-  accept=".bas,.txt,.clack" 
+  accept=".bas,.txt,.clack,.c,.cpp,.h,.ino,.vhd,.asm" 
   onchange={handleFileSelect} 
   style="display: none;" 
 />
@@ -518,6 +563,9 @@ HALT
       </button>
       <button class="btn-subtle" onclick={openFilePicker} title="BASIC-Datei von Computer öffnen (.bas, .txt)">
         📂 Öffnen...
+      </button>
+      <button class="btn-subtle" onclick={() => showImportModal = true} title="C-Arrays, daten[...] Zuweisungen oder Arduino .ino importieren & in BASIC dekompilieren">
+        📥 Array dekompilieren
       </button>
       <button class="btn-subtle" onclick={saveFile} title="Aktuelles Programm auf Festplatte speichern">
         💾 Speichern

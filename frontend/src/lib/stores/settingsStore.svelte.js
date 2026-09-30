@@ -11,6 +11,18 @@ export class SettingsStore {
   sharedAsmCode = $state('');
   sharedBasicCode = $state('');
 
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get('tab');
+      if (t === 'asm') this.activeTab = 'tab-asm';
+      else if (t === 'editor' || t === 'machine') this.activeTab = 'tab-editor';
+      else if (t === 'disasm') this.activeTab = 'tab-disasm';
+      else if (t === 'memory') this.activeTab = 'tab-memory';
+      else if (t === 'history') this.activeTab = 'tab-history';
+    }
+  }
+
   setTheme(newTheme) {
     this.theme = newTheme;
     if (typeof document !== 'undefined') {
