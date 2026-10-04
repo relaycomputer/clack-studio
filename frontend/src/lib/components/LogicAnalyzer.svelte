@@ -8,9 +8,9 @@
   let entries = $derived(cpu.history.slice(-100).reverse());
 
   function exportCSV() {
-    let csv = "Index,Befehl_Hex,Mnemonic,PC_Hex,Accu_Hex,Addr_Hex,Data_Hex,Read_Hex,Write_Hex,Carry,Stack_Hex,Zyklen\n";
+    let csv = "Index,Befehl_Hex,Mnemonic,PC_Hex,Accu_Hex,Addr_Hex,Data_Hex,Read_Hex,Write_Hex,Carry,Stack_Hex,Schritt_Takte,Gesamt_Zyklen\n";
     for (let r of cpu.history) {
-      csv += `${r.idx},${hex(r.cmd)},"${r.mnemonic}",${hex(r.pc,3)},${hex(r.accu)},${hex(r.addr,3)},${hex(r.data)},${r.read ? hex(r.read) : '0'},${r.write ? hex(r.write) : '0'},${r.carry},${hex(r.stack,3)},${r.cycles}\n`;
+      csv += `${r.idx},${hex(r.cmd)},"${r.mnemonic}",${hex(r.pc,3)},${hex(r.accu)},${hex(r.addr,3)},${hex(r.data)},${r.read ? hex(r.read) : '0'},${r.write ? hex(r.write) : '0'},${r.carry},${hex(r.stack,3)},${r.stepCycles || 1},${r.cycles}\n`;
     }
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -28,7 +28,7 @@
 
 <div class="tab-pane active" id="tab-history">
   <div class="history-toolbar">
-    <span>Ausführungs-History (Zyklus für Zyklus)</span>
+    <span>Ausführungs-History (Befehl für Befehl & Zyklengenau)</span>
     <div class="history-actions">
       <button class="btn-subtle" onclick={exportCSV}>Export als CSV</button>
       <button class="btn-subtle" onclick={clearHistory}>History leeren</button>
@@ -49,6 +49,7 @@
           <th>W</th>
           <th>Flag</th>
           <th>Stack</th>
+          <th>Takte</th>
           <th>Zyklen</th>
         </tr>
       </thead>
@@ -66,6 +67,7 @@
             <td>{r.write ? hex(r.write) : '-'}</td>
             <td>{r.carry}</td>
             <td>{hex(r.stack, 3)}</td>
+            <td style="color: var(--accent-color); font-weight: 600;">+{r.stepCycles || 1}</td>
             <td>{r.cycles}</td>
           </tr>
         {/each}

@@ -45,6 +45,7 @@ export class CPUStore {
   dataBus = $state(0);
   read = $state(0);
   write = $state(0);
+  instructions = $state(0);
   cycles = $state(0);
   halted = $state(false);
   haltReason = $state('');
@@ -60,6 +61,32 @@ export class CPUStore {
   isRunning = $state(false);
   timerId = null;
 
+  getInstructionCycles(cmd) {
+    switch (cmd) {
+      case OP.NOP: return 1;
+      case OP.LDA: return 2;   // Fetch Opcode + Fetch Immediate
+      case OP.LDAM: return 3;  // Fetch Opcode + Fetch Address + Read RAM
+      case OP.LDAMM: return 4; // Fetch Opcode + Fetch Pointer + Read Pointer Target + Read Effective RAM
+      case OP.STAM: return 3;  // Fetch Opcode + Fetch Address + Write RAM
+      case OP.STAMM: return 4; // Fetch Opcode + Fetch Pointer + Read Pointer Target + Write Effective RAM
+      case OP.ADD:
+      case OP.AND:
+      case OP.OR:
+      case OP.NOT:
+      case OP.SHR:
+      case OP.SHL:
+      case OP.BA:
+      case OP.BC:
+      case OP.BN:
+      case OP.BE:
+      case OP.BZ:
+        return 2;              // Fetch Opcode + Fetch Operand / Target & ALU latch
+      case OP.CALL: return 3;  // Fetch Opcode + Fetch Target + Save Stack
+      case OP.RET: return 2;   // Fetch Opcode + Load Stack to PC
+      default: return 1;
+    }
+  }
+
   reset() {
     this.pause();
     this.pc = 0;
@@ -74,6 +101,7 @@ export class CPUStore {
     this.dataBus = 0;
     this.read = 0;
     this.write = 0;
+    this.instructions = 0;
     this.cycles = 0;
     this.halted = false;
     this.haltReason = '';
@@ -196,14 +224,17 @@ export class CPUStore {
     const currentPC = this.pc;
     const cmd = this.memory[this.pc];
     this.ir = cmd;
-    this.cycles++;
+
+    const stepCycles = this.getInstructionCycles(cmd);
+    this.instructions++;
+    this.cycles += stepCycles;
 
     this.read = 0;
     this.write = 0;
     this.lastWriteAddr = -1;
 
     const trace = {
-      idx: this.cycles,
+      idx: this.instructions,
       pc: currentPC,
       cmd: cmd,
       mnemonic: '',
@@ -214,6 +245,7 @@ export class CPUStore {
       write: 0,
       carry: this.carry,
       stack: this.stack,
+      stepCycles: stepCycles,
       cycles: this.cycles
     };
 

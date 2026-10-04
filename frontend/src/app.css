@@ -173,6 +173,7 @@ html, body {
 .metric-card.card-pc { width: 88px; }
 .metric-card.card-accu { width: 148px; }
 .metric-card.card-stack { width: 88px; }
+.metric-card.card-instr { width: 88px; }
 .metric-card.card-cycles { width: 98px; }
 .metric-card.card-time { width: 108px; }
 

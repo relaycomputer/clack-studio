@@ -47,11 +47,15 @@
       <span class="label">STACK</span>
       <span class="value">{hexStack}</span>
     </div>
-    <div class="metric-card card-cycles" title="Ausgeführte Maschinentakte">
+    <div class="metric-card card-instr" title="Ausgeführte Befehle">
+      <span class="label">BEFEHLE</span>
+      <span class="value">{cpu.instructions}</span>
+    </div>
+    <div class="metric-card card-cycles" title="Ausgeführte Hardware-Maschinentakte (zyklengenau)">
       <span class="label">CYCLES</span>
       <span class="value">{cpu.cycles}</span>
     </div>
-    <div class="metric-card card-time" title="Berechnete Originaldauer auf echter 20 Hz Relais-Hardware (50 ms / Takt)">
+    <div class="metric-card card-time" title="Berechnete Originaldauer auf echter 20 Hz Relais-Hardware (50 ms pro Hardware-Takt)">
       <span class="label">RELAIS-ZEIT</span>
       <span class="value">{relayTimeSec}</span>
     </div>

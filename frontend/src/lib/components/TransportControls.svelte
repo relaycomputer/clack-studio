@@ -87,8 +87,8 @@
       oninput={handleSliderChange}
     />
     <span class="speed-val">{SPEED_PRESETS[currentStep].label}</span>
-    <span class="hardware-time-badge" title="Original Hardware-Laufzeit auf 20 Hz Relaisrechner">
-      ⚙️ Relais-Laufzeit: {hardwareTimeFormatted}
+    <span class="hardware-time-badge" title="Original Hardware-Laufzeit auf 20 Hz Relaisrechner (50 ms pro Hardware-Takt)">
+      ⚙️ Relais-Laufzeit: {hardwareTimeFormatted} <small>({cpu.instructions} Befehle / {cpu.cycles} Takte)</small>
     </span>
   </div>
 </div>
