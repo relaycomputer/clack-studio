@@ -5,6 +5,8 @@
 export class SettingsStore {
   theme = $state('theme-amber');
   matrixResolution = $state(32); // 32 = 4x Hardware Matrix ab 960 (0x03C0), 64 = Full Framebuffer ab 768
+  matrixColorMode = $state('mandelbrot'); // 'theme', 'mandelbrot', 'rgb16', 'cyberpunk', 'rainbow'
+  matrixMode = $state('1bit'); // '1bit' (16 px/word) or '4bit' (4 px/word, 16 colors)
   soundEnabled = $state(true);
   speedHz = $state(500);
   activeTab = $state('tab-basic');
@@ -32,6 +34,14 @@ export class SettingsStore {
 
   setMatrixResolution(res) {
     this.matrixResolution = res;
+  }
+
+  setMatrixColorMode(mode) {
+    this.matrixColorMode = mode;
+  }
+
+  setMatrixMode(mode) {
+    this.matrixMode = mode;
   }
 
   toggleSound() {
