@@ -46,6 +46,7 @@ func openBrowser(url string) {
 }
 
 func main() {
+	host := flag.String("host", "127.0.0.1", "HTTP server host address (use 0.0.0.0 for LAN access)")
 	port := flag.Int("port", 8080, "HTTP server port")
 	loadPath := flag.String("load", "", "Optional path to daten[...] file to load at startup")
 	autoOpen := flag.Bool("open", true, "Open default browser automatically on startup")
@@ -87,11 +88,14 @@ func main() {
 	}
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
 
-	url := fmt.Sprintf("http://localhost:%d", *port)
-	addr := fmt.Sprintf("0.0.0.0:%d", *port)
+	url := fmt.Sprintf("http://%s:%d", *host, *port)
+	if *host == "0.0.0.0" {
+		url = fmt.Sprintf("http://localhost:%d", *port)
+	}
+	addr := fmt.Sprintf("%s:%d", *host, *port)
 	fmt.Println("==================================================================")
-	fmt.Printf("⚡ CLACK-STUDIO: 16-Bit Relay Computer Simulator & Lab\n")
-	fmt.Printf("⚡ Server running on: %s\n", url)
+	fmt.Printf("⚡ CLACK-STUDIO (v2.5.3): 16-Bit Relay Computer Simulator & Lab\n")
+	fmt.Printf("⚡ Server running on: %s (Bind: %s)\n", url, addr)
 	fmt.Println("==================================================================")
 
 	if *autoOpen {
@@ -128,6 +132,7 @@ func (s *Server) handleLoad(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB limit
 	var req struct {
 		Source string `json:"source"`
 	}
@@ -156,6 +161,7 @@ func (s *Server) handleCompile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB limit
 	var req struct {
 		Source string `json:"source"`
 		Format string `json:"format"`
@@ -229,6 +235,7 @@ func (s *Server) handleCompileAndLoad(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB limit
 	var req struct {
 		Source string `json:"source"`
 	}
@@ -321,19 +328,29 @@ func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB limit
 	var req struct {
 		MaxSteps int `json:"maxSteps"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
+	const maxAllowedSteps = 1_000_000
 	if req.MaxSteps <= 0 {
 		req.MaxSteps = 50000
+	} else if req.MaxSteps > maxAllowedSteps {
+		req.MaxSteps = maxAllowedSteps
 	}
 
+	ctx := r.Context()
 	steps := 0
 	running := true
 	for steps < req.MaxSteps && running {
-		running = s.machine.Step()
-		steps++
+		select {
+		case <-ctx.Done():
+			running = false
+		default:
+			running = s.machine.Step()
+			steps++
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -381,6 +398,7 @@ func (s *Server) handleFlash(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB limit
 	var req struct {
 		Port   string `json:"port"`
 		Baud   int    `json:"baud"`
@@ -411,6 +429,7 @@ func (s *Server) handleAssemble(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB limit
 	var req struct {
 		Source string `json:"source"`
 	}
@@ -461,6 +480,7 @@ func (s *Server) handleDisasm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB limit
 	var req struct {
 		Source string `json:"source"`
 	}
@@ -507,6 +527,7 @@ func (s *Server) handleDecompile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB limit
 	var req struct {
 		Source string `json:"source"`
 	}

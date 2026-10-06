@@ -1,13 +1,27 @@
-# ⚡ CLACK-STUDIO
+# ⚡ CLACK-STUDIO (v2.5.3)
 **16-Bit Relay Computer Visual Hardware Lab & Emulator (Svelte 5 + Go)**
 
 `clack-studio` ist ein eigenständiger visueller Hardware-Simulator, Assembler, Compiler und Debugger für den 16-Bit Relaisrechner mit modernem **Svelte 5 + Vite Web-Frontend**, **CodeMirror 6 BASIC & Assembler IDE**, 64×64 / 32×32 Multi-Color LED Matrix Display, Frontpanel-LEDs, Logic Analyzer, zyklengenauer Relais-Akustik und Arduino-Flasher.
 
 ---
 
-## ✨ Features (v2.5.2)
+## ✨ Neu in v2.5.3 (Hardening & 10-Bit Hardware-Masking)
 
-### 1. ⏱️ Cycle-Accurate Timing & Hardware-Metriken (Neu in v2.5.1)
+* **🛡️ Network & Server Hardening:**
+  * Standardmäßiges Binding an `127.0.0.1` (sicherer Standalone-Betrieb).
+  * Konfigurierbares `-host` Flag (z. B. `./clack-studio -host 0.0.0.0` für Remote-Laborzugriff über LAN/WLAN).
+  * Request-Body-Größenbegrenzung (`4 MiB MaxBytesReader`) gegen Payload-Overflows.
+  * Obergrenzen-Schutz und Context-Cancellation bei `/api/run` Simulationen.
+* **⚡ 10-Bit Hardware Address Bus Wrap-Around:**
+  * Physisch exakte 10-Bit Adressmaskierung (`& 0x03FF`) für $1024 \rightarrow 0$ Speicher- und PC-Überläufe in der Go- und JS-Engine.
+* **📊 Logic Analyzer Trace-Synchronisation:**
+  * Konsistente Erfassung der kumulativen Maschinenzyklen nach jedem Taktschritt.
+
+---
+
+## ✨ Haupt-Features
+
+### 1. ⏱️ Cycle-Accurate Timing & Hardware-Metriken
 * **Befehlsgenaue Takt-Gewichtung:**
   * `NOP`: 1 Takt (~50 ms)
   * `LDA #imm`, `ADD #imm`, `AND`, `OR`, `NOT`, `SHR`, `SHL`, `BA`, `BC`, `BN`, `BE`, `BZ`, `RET`: 2 Takte (~100 ms)

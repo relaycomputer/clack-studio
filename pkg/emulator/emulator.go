@@ -266,86 +266,58 @@ func (m *Machine) Step() bool {
 
 	switch cmd {
 	case OpNOP:
-		m.State.PC++
+		m.State.PC = (pc + 1) & 0x03FF
 		m.State.Cycles += 2
 
 	case OpLDA:
-		if pc+1 >= MemSize {
-			m.halt("LDA operand out of bounds")
-			return false
-		}
 		m.State.Accu = opVal
-		m.State.AddressBus = pc + 1
+		m.State.AddressBus = (pc + 1) & 0x03FF
 		m.State.DataBus = opVal
 		m.State.Read = opVal
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 4
 
 	case OpLDAM:
-		if pc+1 >= MemSize || opVal >= MemSize {
-			m.halt("LDAM address out of bounds")
-			return false
-		}
-		m.State.Accu = m.Memory[opVal]
-		m.State.AddressBus = opVal
+		addr := opVal & 0x03FF
+		m.State.Accu = m.Memory[addr]
+		m.State.AddressBus = addr
 		m.State.DataBus = m.State.Accu
 		m.State.Read = m.State.Accu
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 6
 
 	case OpLDAMM:
-		if pc+1 >= MemSize || opVal >= MemSize {
-			m.halt("LDAMM 1st address out of bounds")
-			return false
-		}
-		ptr := m.Memory[opVal]
-		if ptr >= MemSize {
-			m.halt("LDAMM 2nd address out of bounds")
-			return false
-		}
-		m.State.Accu = m.Memory[ptr]
-		m.State.AddressBus = ptr
+		ptr := opVal & 0x03FF
+		target := m.Memory[ptr] & 0x03FF
+		m.State.Accu = m.Memory[target]
+		m.State.AddressBus = target
 		m.State.DataBus = m.State.Accu
 		m.State.Read = m.State.Accu
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 8
 
 	case OpSTAM:
-		if pc+1 >= MemSize || opVal >= MemSize {
-			m.halt("STAM address out of bounds")
-			return false
-		}
-		m.Memory[opVal] = m.State.Accu
-		m.LastModified[opVal] = true
-		m.State.AddressBus = opVal
+		addr := opVal & 0x03FF
+		m.Memory[addr] = m.State.Accu
+		m.LastModified[addr] = true
+		m.State.AddressBus = addr
 		m.State.DataBus = m.State.Accu
 		m.State.Write = m.State.Accu
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 6
 
 	case OpSTAMM:
-		if pc+1 >= MemSize || opVal >= MemSize {
-			m.halt("STAMM 1st address out of bounds")
-			return false
-		}
-		ptr := m.Memory[opVal]
-		if ptr >= MemSize {
-			m.halt("STAMM 2nd address out of bounds")
-			return false
-		}
-		m.Memory[ptr] = m.State.Accu
-		m.LastModified[ptr] = true
-		m.State.AddressBus = ptr
+		ptr := opVal & 0x03FF
+		target := m.Memory[ptr] & 0x03FF
+		m.Memory[target] = m.State.Accu
+		m.LastModified[target] = true
+		m.State.AddressBus = target
 		m.State.DataBus = m.State.Accu
 		m.State.Write = m.State.Accu
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 8
 
 	case OpADD:
-		if pc+1 >= MemSize {
-			m.halt("ADD operand out of bounds")
-			return false
-		}
 		res := uint32(m.State.Accu) + uint32(opVal)
 		if res > 0xFFFF {
 			m.State.Carry = 1
@@ -353,99 +325,88 @@ func (m *Machine) Step() bool {
 			m.State.Carry = 0
 		}
 		m.State.Accu = uint16(res & 0xFFFF)
-		m.State.AddressBus = pc + 1
+		m.State.AddressBus = (pc + 1) & 0x03FF
 		m.State.DataBus = opVal
 		m.State.Read = opVal
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 4
 
 	case OpAND:
-		if pc+1 >= MemSize {
-			m.halt("AND operand out of bounds")
-			return false
-		}
-		m.State.Carry = 0
 		m.State.Accu = m.State.Accu & opVal
-		m.State.AddressBus = pc + 1
+		m.State.AddressBus = (pc + 1) & 0x03FF
 		m.State.DataBus = opVal
 		m.State.Read = opVal
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 4
 
 	case OpOR:
-		if pc+1 >= MemSize {
-			m.halt("OR operand out of bounds")
-			return false
-		}
-		m.State.Carry = 0
 		m.State.Accu = m.State.Accu | opVal
-		m.State.AddressBus = pc + 1
+		m.State.AddressBus = (pc + 1) & 0x03FF
 		m.State.DataBus = opVal
 		m.State.Read = opVal
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 4
 
 	case OpNOT:
-		m.State.Carry = 0
 		m.State.Accu = ^m.State.Accu
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 4
 
 	case OpSHR:
-		m.State.Carry = 0
+		m.State.Carry = m.State.Accu & 1
 		m.State.Accu = m.State.Accu >> 1
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 4
 
 	case OpSHL:
-		m.State.Carry = 0
+		m.State.Carry = (m.State.Accu >> 15) & 1
 		m.State.Accu = (m.State.Accu << 1) & 0xFFFF
-		m.State.PC += 2
+		m.State.PC = (pc + 2) & 0x03FF
 		m.State.Cycles += 4
 
 	case OpBA:
-		m.State.PC = opVal
+		m.State.PC = opVal & 0x03FF
 		m.State.Cycles += 4
 
 	case OpBC:
 		if m.State.Carry == 1 {
-			m.State.PC = opVal
+			m.State.PC = opVal & 0x03FF
 		} else {
-			m.State.PC += 2
+			m.State.PC = (pc + 2) & 0x03FF
 		}
 		m.State.Cycles += 4
 
 	case OpBN:
 		if (m.State.Accu & 0x8000) != 0 {
-			m.State.PC = opVal
+			m.State.PC = opVal & 0x03FF
 		} else {
-			m.State.PC += 2
+			m.State.PC = (pc + 2) & 0x03FF
 		}
 		m.State.Cycles += 4
 
 	case OpBE:
 		if (m.State.Accu & 0x0001) == 0 {
-			m.State.PC = opVal
+			m.State.PC = opVal & 0x03FF
 		} else {
-			m.State.PC += 2
+			m.State.PC = (pc + 2) & 0x03FF
 		}
 		m.State.Cycles += 4
 
 	case OpBZ:
 		if m.State.Accu == 0 {
-			m.State.PC = opVal
+			m.State.PC = opVal & 0x03FF
 		} else {
-			m.State.PC += 2
+			m.State.PC = (pc + 2) & 0x03FF
 		}
 		m.State.Cycles += 4
 
 	case OpCALL:
-		m.State.Stack = pc + 2
-		m.State.PC = opVal
+		m.State.Stack = (pc + 2) & 0x03FF
+		m.State.PC = opVal & 0x03FF
 		m.State.Cycles += 4
 
 	case OpRET:
-		m.State.PC = m.State.Stack
+		m.State.PC = m.State.Stack & 0x03FF
 		m.State.Cycles += 5
 
 	default:
@@ -465,6 +426,7 @@ func (m *Machine) Step() bool {
 	entry.Write = m.State.Write
 	entry.Accu = m.State.Accu
 	entry.Carry = m.State.Carry
+	entry.Cycles = m.State.Cycles
 
 	if len(m.History) < HistoryBuffer {
 		m.History = append(m.History, entry)
