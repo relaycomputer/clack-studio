@@ -288,6 +288,9 @@
       {settings.matrixMode === '4bit' ? 'RAM: 0x0300 (4-Bit RGB)' : (settings.matrixResolution === 32 ? 'RAM: 0x03C0 (960..1023)' : 'RAM: 0x0300 (768..1023)')}
     </span>
     <div class="matrix-actions">
+      <button class="btn-subtle btn-accent-pulse" onclick={() => settings.setRelayDefaults()} title="Auf Standard des echten Relaissystems zurücksetzen: 32×32, Linear, Monochrom, 1-Bit">
+        ⚡ Relais-Standard
+      </button>
       <button class="btn-subtle" onclick={drawTestPattern} title="Schachbrett- / Farb-Testmuster in den Framebuffer schreiben">
         Testmuster
       </button>

@@ -1,0 +1,29 @@
+// ============================================================
+// ⚡ 64x64 Matrix Display Demo: Animiertes Bouncing Pixel & Rahmen
+// Schreibt direkt in Framebuffer-Bereich daten[768..1023] (256 Worte)
+// ============================================================
+
+daten[0] = 0x1400; // LDA 0xFFFF (Oberste Linie)
+daten[1] = 0xFFFF;
+daten[2] = 0x2800; // STAM 768
+daten[3] = 768;
+daten[4] = 0x2800; // STAM 769
+daten[5] = 769;
+daten[6] = 0x2800; // STAM 770
+daten[7] = 770;
+daten[8] = 0x2800; // STAM 771
+daten[9] = 771;
+
+// Diagonale Pixel
+daten[10] = 0x1400; // LDA 0x8000
+daten[11] = 0x8000;
+daten[12] = 0x2800; // STAM 776
+daten[13] = 776;
+
+daten[14] = 0x1400; // LDA 0x4000
+daten[15] = 0x4000;
+daten[16] = 0x2800; // STAM 780
+daten[17] = 780;
+
+daten[18] = 0x4000; // BA 18 (Halt/Loop)
+daten[19] = 18;

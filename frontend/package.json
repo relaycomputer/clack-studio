@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node ../scripts/sync-examples.js",
     "dev": "vite",
+    "prebuild": "node ../scripts/sync-examples.js",
     "build": "vite build",
     "preview": "vite preview"
   },

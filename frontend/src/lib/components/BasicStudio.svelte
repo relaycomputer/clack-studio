@@ -7,7 +7,7 @@
   import { settings } from '../stores/settingsStore.svelte.js';
   import FlashModal from './FlashModal.svelte';
   import ImportArrayModal from './ImportArrayModal.svelte';
-  import { BASIC_PRESETS } from '../data/basicPresets.js';
+  import { BASIC_PRESETS, BASIC_PRESETS_LIST } from '../data/basicPresets.js';
 
   let editorContainer = $state(null);
   let editorView = $state(null);
@@ -41,13 +41,14 @@
 
   function loadPreset(key) {
     selectedPreset = key;
-    if (editorView && BASIC_PRESETS[key]) {
+    const found = BASIC_PRESETS_LIST.find(p => p.id === key);
+    if (editorView && found) {
       editorView.dispatch({
-        changes: { from: 0, to: editorView.state.doc.length, insert: BASIC_PRESETS[key] }
+        changes: { from: 0, to: editorView.state.doc.length, insert: found.code }
       });
-      currentFileName = `${key}.bas`;
+      currentFileName = found.filename;
       statusType = '';
-      statusMessage = `BASIC-Vorlage '${key}.bas' geladen. Bereit zum Kompilieren.`;
+      statusMessage = `BASIC-Vorlage '${found.filename}' geladen. Bereit zum Kompilieren.`;
     }
   }
 
@@ -391,12 +392,9 @@ HALT
         onchange={(e) => loadPreset(e.target.value)}
       >
         <option value="" disabled selected={!selectedPreset}>-- Vorlage wählen --</option>
-        <option value="ping_pong">🏓 Autonomes Ping-Pong</option>
-        <option value="mandelbrot">🌀 Mandelbrot Fraktal (32x32)</option>
-        <option value="graphics_demo">🎨 4-Display Matrix Grafik</option>
-        <option value="math_test">🔢 Mathematik & Logik Test</option>
-        <option value="data_test">📋 DATA / READ / RESTORE</option>
-        <option value="matrix_bounce_basic">✨ Bouncing Pixel Animation</option>
+        {#each BASIC_PRESETS_LIST as p}
+          <option value={p.id}>{p.label}</option>
+        {/each}
       </select>
     </div>
 

@@ -8,134 +8,7 @@
   import { settings } from '../stores/settingsStore.svelte.js';
   import FlashModal from './FlashModal.svelte';
   import ImportArrayModal from './ImportArrayModal.svelte';
-
-  const ASM_PRESETS = {
-    matrix_bounce: `; ============================================================
-; 🏓 16-Bit Relais-Assembler: LED-Matrix Bouncing Pixel Demo
-; ============================================================
-ORG 0
-
-START:
-    ; Framebuffer Display Wort 0 leeren (Zeile 0, Pixel 0..15)
-    LDA #0
-    STAM 960
-
-    ; Variablen initialisieren
-    LDA #0
-    STAM 500       ; Pixel-Position X (0..15)
-    LDA #1
-    STAM 501       ; Bitmaske (0x0001)
-
-BOUNCE_LOOP:
-    ; Aktuelle Bitmaske in Framebuffer schreiben
-    LDAM 501
-    STAM 960
-
-    ; Bitmaske nach links rotieren (Pixel wandert nach links)
-    LDAM 501
-    SHL
-    STAM 501
-
-    ; Pruefen ob Bit 15 erreicht (Negative Flag)
-    BN RESET_BIT
-
-    ; Pause-Schleife (Verzoegerung)
-    LDA #50
-    STAM 502
-DELAY_LOOP:
-    LDAM 502
-    ADD #-1
-    STAM 502
-    BZ BOUNCE_LOOP
-    BA DELAY_LOOP
-
-RESET_BIT:
-    LDA #1
-    STAM 501
-    BA BOUNCE_LOOP
-`,
-
-    collatz: `; ============================================================
-; 🔢 16-Bit Relais-Assembler: Collatz-Folge (3n + 1)
-; ============================================================
-ORG 0
-
-START:
-    NOP
-
-LOOP:
-    ; Pruefe ob V_200 == 1 (Ziel erreicht)
-    LDAM 200
-    ADD #-1
-    BZ FINISH
-
-    ; Pruefe ob Zahl gerade ist (Bit 0 == 0)
-    LDAM 200
-    BE EVEN_NUMBER
-
-ODD_NUMBER:
-    ; Ungerade: 3n + 1 (entspricht 2n + n + 1)
-    LDAM 200
-    STAM 16        ; n sichern
-    SHL            ; 2n
-    ADD 16         ; 3n
-    ADD #1         ; 3n + 1
-    BA UPDATE_VAL
-
-EVEN_NUMBER:
-    ; Gerade: n / 2
-    LDAM 200
-    SHR
-
-UPDATE_VAL:
-    STAM 200       ; Neuer Wert
-    LDAM 201
-    ADD #1
-    STAM 201       ; Schrittzaehler + 1
-    BA LOOP
-
-FINISH:
-    LDAM 201       ; Ergebnis im Akku
-    HALT
-`,
-
-    fibonacci: `; ============================================================
-; 🌀 16-Bit Relais-Assembler: Fibonacci-Sequenz
-; ============================================================
-ORG 0
-
-START:
-    LDA #0
-    STAM 500       ; F0 = 0
-    LDA #1
-    STAM 501       ; F1 = 1
-    LDA #10
-    STAM 502       ; Countdown = 10 Terme
-
-FIB_LOOP:
-    ; F2 = F0 + F1
-    LDAM 500
-    ADD 501
-    STAM 503       ; F2
-
-    ; Weiterschieben: F0 = F1, F1 = F2
-    LDAM 501
-    STAM 500
-    LDAM 503
-    STAM 501
-
-    ; Countdown dekrementieren
-    LDAM 502
-    ADD #-1
-    STAM 502
-    BZ DONE
-    BA FIB_LOOP
-
-DONE:
-    LDAM 501       ; 10. Fibonacci-Zahl im Akku
-    HALT
-`
-  };
+  import { ASM_PRESETS, ASM_PRESETS_LIST } from '../data/asmPresets.js';
 
   let editorContainer;
   let editorView;
@@ -210,9 +83,10 @@ DONE:
 
   function loadPreset(key) {
     currentPreset = key;
-    currentFileName = `${key}.asm`;
-    if (ASM_PRESETS[key]) {
-      setEditorContent(ASM_PRESETS[key]);
+    const found = ASM_PRESETS_LIST.find(p => p.id === key);
+    if (found) {
+      currentFileName = found.filename;
+      setEditorContent(found.code);
     }
   }
 
@@ -451,9 +325,10 @@ LOOP:
           bind:value={currentPreset} 
           onchange={(e) => loadPreset(e.target.value)}
         >
-          <option value="matrix_bounce">🏓 LED-Matrix Bouncing Pixel</option>
-          <option value="collatz">🔢 Collatz-Folge 3n+1 Benchmark</option>
-          <option value="fibonacci">🌀 Fibonacci-Rechner</option>
+          <option value="" disabled selected={!currentPreset}>-- Vorlage wählen --</option>
+          {#each ASM_PRESETS_LIST as p}
+            <option value={p.id}>{p.label}</option>
+          {/each}
         </select>
       </div>
     </div>

@@ -1,0 +1,9 @@
+// ============================================================
+// ⚡ Dijkstra Algorithmus: Kuerzester Weg in Oesterreich (17 Staedte)
+// ============================================================
+daten[0] = 0x1400; // LDA Startknoten
+daten[1] = 0;
+daten[2] = 0x2800; // STAM start_node
+daten[3] = 500;
+daten[4] = 0x4000; // BA Ende
+daten[5] = 4;

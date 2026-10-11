@@ -1,0 +1,772 @@
+/*
+  Relay computer: solve 2 linear equations with 2 unknowns and show them on 32x32 display
+  ----------------------------------------------------------------------------------------
+      a*x + b*y = c
+      d*x + e*y = f
+
+  Signed input range for this 16-bit version:
+      a,b,c,d,e,f = -39..+39
+
+  Results:
+      daten[900] = X10  (37 means 3.7, -13 means -1.3)
+      daten[901] = Y10
+
+  Method:
+      D  = a*e - b*d
+      Nx = c*e - b*f
+      Ny = a*f - c*d
+
+      X10 = sign(Nx/D) * floor((10*abs(Nx) + abs(D)/2) / abs(D))
+      Y10 = sign(Ny/D) * floor((10*abs(Ny) + abs(D)/2) / abs(D))
+
+  Multiplication and division are both implemented in software.
+  MUL accepts signed operands. DIV works on the positive magnitudes prepared by the main code.
+
+  Demo equations:
+      3*x + 7*y = 2
+      4*x + 6*y = 7
+
+  Exact solution:
+      x = 3.7
+      y = -1.3
+
+  Expected fixed-point results:
+      X10 =  37 = 0x0025
+      Y10 = -13 = 0xFFF3
+
+  Display:
+      8-row block 1: a, b -> c as 8-bit binary values
+      8-row block 2: d, e -> f as 8-bit binary values
+      8-row block 3: horizontal line
+      8-row block 4: X10 left (16 bit), Y10 right (16 bit)
+
+  The center rows used are y=3, 11, 19 and 27.
+*/
+
+// ===== BOOT/INPUT =====
+daten[0] = 0x4000;    // BA - jump to main
+daten[1] = 0x0028;    // DISPLAY_INIT
+daten[20] = 0x0003;    // a = 3
+daten[21] = 0x0007;    // b = 7
+daten[22] = 0x0002;    // c = 2
+daten[23] = 0x0004;    // d = 4
+daten[24] = 0x0006;    // e = 6
+daten[25] = 0x0007;    // f = 7
+
+
+// ===== DISPLAY INIT =====
+// 32x32 display: daten[960] is row 0 right half, daten[961] row 0 left half.
+//
+// Layout:
+//   row  3: [a=00000011][b=00000111] [arrow] [c=00000010]
+//   row 11: [d=00000100][e=00000110] [arrow] [f=00000111]
+//   row 19: horizontal separator
+//   row 27: X10 on left 16 pixels, Y10 on right 16 pixels (written at the end)
+//
+// Arrow occupies the high byte of the right 16-bit word.
+// top/bottom = 0x04, center = 0x3E.
+
+daten[40] = 0x1400;    // LDA arrow top/bottom
+daten[41] = 0x0400;
+daten[42] = 0x2800;    // STAM row 2 right
+daten[43] = 0x03C4;    // 964
+daten[44] = 0x2800;    // STAM row 4 right
+daten[45] = 0x03C8;    // 968
+
+daten[46] = 0x1400;    // LDA equation 1 right: arrow + c
+daten[47] = 0x3E02;
+daten[48] = 0x2800;    // STAM row 3 right
+daten[49] = 0x03C6;    // 966
+
+daten[50] = 0x1400;    // LDA equation 1 left: a + b
+daten[51] = 0x0307;
+daten[52] = 0x2800;    // STAM row 3 left
+daten[53] = 0x03C7;    // 967
+
+daten[54] = 0x1400;    // LDA arrow top/bottom
+daten[55] = 0x0400;
+daten[56] = 0x2800;    // STAM row 10 right
+daten[57] = 0x03D4;    // 980
+daten[58] = 0x2800;    // STAM row 12 right
+daten[59] = 0x03D8;    // 984
+
+daten[60] = 0x1400;    // LDA equation 2 right: arrow + f
+daten[61] = 0x3E07;
+daten[62] = 0x2800;    // STAM row 11 right
+daten[63] = 0x03D6;    // 982
+
+daten[64] = 0x1400;    // LDA equation 2 left: d + e
+daten[65] = 0x0406;
+daten[66] = 0x2800;    // STAM row 11 left
+daten[67] = 0x03D7;    // 983
+
+daten[68] = 0x1400;    // LDA full horizontal line
+daten[69] = 0xFFFF;
+daten[70] = 0x2800;    // STAM row 19 right
+daten[71] = 0x03E6;    // 998
+daten[72] = 0x2800;    // STAM row 19 left
+daten[73] = 0x03E7;    // 999
+
+daten[74] = 0x1400;    // LDA 0
+daten[75] = 0x0000;
+daten[76] = 0x2800;    // clear result row 27 right (Y10)
+daten[77] = 0x03F6;    // 1014
+daten[78] = 0x2800;    // clear result row 27 left (X10)
+daten[79] = 0x03F7;    // 1015
+
+daten[80] = 0x4000;    // BA START
+daten[81] = 0x0064;    // 100
+
+// ===== MAIN =====
+
+// START
+daten[100] = 0x1800;    // LDAM
+daten[101] = 0x0014;
+daten[102] = 0x2800;    // STAM
+daten[103] = 0x0320;
+daten[104] = 0x1800;    // LDAM
+daten[105] = 0x0018;
+daten[106] = 0x2800;    // STAM
+daten[107] = 0x0321;
+daten[108] = 0x1400;    // LDA
+daten[109] = 0x0000;
+daten[110] = 0x2800;    // STAM
+daten[111] = 0x0322;
+daten[112] = 0x5000;    // CALL
+daten[113] = 0x0258;    // MUL
+daten[114] = 0x2800;    // STAM
+daten[115] = 0x0334;
+daten[116] = 0x1800;    // LDAM
+daten[117] = 0x0015;
+daten[118] = 0x2800;    // STAM
+daten[119] = 0x0320;
+daten[120] = 0x1800;    // LDAM
+daten[121] = 0x0017;
+daten[122] = 0x2800;    // STAM
+daten[123] = 0x0321;
+daten[124] = 0x1400;    // LDA
+daten[125] = 0x0000;
+daten[126] = 0x2800;    // STAM
+daten[127] = 0x0322;
+daten[128] = 0x5000;    // CALL
+daten[129] = 0x0258;    // MUL
+daten[130] = 0x2800;    // STAM
+daten[131] = 0x0335;
+daten[132] = 0x1800;    // LDAM
+daten[133] = 0x0016;
+daten[134] = 0x2800;    // STAM
+daten[135] = 0x0320;
+daten[136] = 0x1800;    // LDAM
+daten[137] = 0x0018;
+daten[138] = 0x2800;    // STAM
+daten[139] = 0x0321;
+daten[140] = 0x1400;    // LDA
+daten[141] = 0x0000;
+daten[142] = 0x2800;    // STAM
+daten[143] = 0x0322;
+daten[144] = 0x5000;    // CALL
+daten[145] = 0x0258;    // MUL
+daten[146] = 0x2800;    // STAM
+daten[147] = 0x0336;
+daten[148] = 0x1800;    // LDAM
+daten[149] = 0x0015;
+daten[150] = 0x2800;    // STAM
+daten[151] = 0x0320;
+daten[152] = 0x1800;    // LDAM
+daten[153] = 0x0019;
+daten[154] = 0x2800;    // STAM
+daten[155] = 0x0321;
+daten[156] = 0x1400;    // LDA
+daten[157] = 0x0000;
+daten[158] = 0x2800;    // STAM
+daten[159] = 0x0322;
+daten[160] = 0x5000;    // CALL
+daten[161] = 0x0258;    // MUL
+daten[162] = 0x2800;    // STAM
+daten[163] = 0x0337;
+daten[164] = 0x1800;    // LDAM
+daten[165] = 0x0014;
+daten[166] = 0x2800;    // STAM
+daten[167] = 0x0320;
+daten[168] = 0x1800;    // LDAM
+daten[169] = 0x0019;
+daten[170] = 0x2800;    // STAM
+daten[171] = 0x0321;
+daten[172] = 0x1400;    // LDA
+daten[173] = 0x0000;
+daten[174] = 0x2800;    // STAM
+daten[175] = 0x0322;
+daten[176] = 0x5000;    // CALL
+daten[177] = 0x0258;    // MUL
+daten[178] = 0x2800;    // STAM
+daten[179] = 0x0338;
+daten[180] = 0x1800;    // LDAM
+daten[181] = 0x0016;
+daten[182] = 0x2800;    // STAM
+daten[183] = 0x0320;
+daten[184] = 0x1800;    // LDAM
+daten[185] = 0x0017;
+daten[186] = 0x2800;    // STAM
+daten[187] = 0x0321;
+daten[188] = 0x1400;    // LDA
+daten[189] = 0x0000;
+daten[190] = 0x2800;    // STAM
+daten[191] = 0x0322;
+daten[192] = 0x5000;    // CALL
+daten[193] = 0x0258;    // MUL
+daten[194] = 0x2800;    // STAM
+daten[195] = 0x0339;
+daten[196] = 0x1800;    // LDAM
+daten[197] = 0x0335;
+daten[198] = 0x3540;    // NOT
+daten[199] = 0x0000;
+daten[200] = 0x3440;    // ADD
+daten[201] = 0x0001;
+daten[202] = 0x2800;    // STAM - patch negative operand
+daten[203] = 0x00CF;    // D_SUB_ADD+1
+daten[204] = 0x1800;    // LDAM
+daten[205] = 0x0334;
+
+// D_SUB_ADD
+daten[206] = 0x3440;    // ADD - D_SUB
+daten[207] = 0x0000;
+daten[208] = 0x2800;    // STAM
+daten[209] = 0x033E;
+daten[210] = 0x1800;    // LDAM
+daten[211] = 0x0337;
+daten[212] = 0x3540;    // NOT
+daten[213] = 0x0000;
+daten[214] = 0x3440;    // ADD
+daten[215] = 0x0001;
+daten[216] = 0x2800;    // STAM - patch negative operand
+daten[217] = 0x00DD;    // NX_SUB_ADD+1
+daten[218] = 0x1800;    // LDAM
+daten[219] = 0x0336;
+
+// NX_SUB_ADD
+daten[220] = 0x3440;    // ADD - NX_SUB
+daten[221] = 0x0000;
+daten[222] = 0x2800;    // STAM
+daten[223] = 0x033F;
+daten[224] = 0x1800;    // LDAM
+daten[225] = 0x0339;
+daten[226] = 0x3540;    // NOT
+daten[227] = 0x0000;
+daten[228] = 0x3440;    // ADD
+daten[229] = 0x0001;
+daten[230] = 0x2800;    // STAM - patch negative operand
+daten[231] = 0x00EB;    // NY_SUB_ADD+1
+daten[232] = 0x1800;    // LDAM
+daten[233] = 0x0338;
+
+// NY_SUB_ADD
+daten[234] = 0x3440;    // ADD - NY_SUB
+daten[235] = 0x0000;
+daten[236] = 0x2800;    // STAM
+daten[237] = 0x0340;
+daten[238] = 0x1800;    // LDAM - D
+daten[239] = 0x033E;
+daten[240] = 0x4018;    // BZ - D==0
+daten[241] = 0x0198;    // ERROR
+daten[242] = 0x4010;    // BN - D<0
+daten[243] = 0x00F6;    // NEG_D
+daten[244] = 0x4000;    // BA
+daten[245] = 0x0110;    // ROUND_X
+
+// NEG_D
+daten[246] = 0x1800;    // LDAM - D
+daten[247] = 0x033E;
+daten[248] = 0x3540;    // NOT
+daten[249] = 0x0000;
+daten[250] = 0x3440;    // ADD
+daten[251] = 0x0001;
+daten[252] = 0x2800;    // STAM - negate
+daten[253] = 0x033E;
+daten[254] = 0x1800;    // LDAM - Nx
+daten[255] = 0x033F;
+daten[256] = 0x3540;    // NOT
+daten[257] = 0x0000;
+daten[258] = 0x3440;    // ADD
+daten[259] = 0x0001;
+daten[260] = 0x2800;    // STAM - negate
+daten[261] = 0x033F;
+daten[262] = 0x1800;    // LDAM - Ny
+daten[263] = 0x0340;
+daten[264] = 0x3540;    // NOT
+daten[265] = 0x0000;
+daten[266] = 0x3440;    // ADD
+daten[267] = 0x0001;
+daten[268] = 0x2800;    // STAM - negate
+daten[269] = 0x0340;
+daten[270] = 0x4000;    // BA
+daten[271] = 0x0110;    // ROUND_X
+
+// ROUND_X
+daten[272] = 0x1400;    // LDA
+daten[273] = 0x0000;
+daten[274] = 0x2800;    // STAM - sign=0
+daten[275] = 0x0341;
+daten[276] = 0x1800;    // LDAM
+daten[277] = 0x033F;
+daten[278] = 0x4010;    // BN
+daten[279] = 0x011A;    // ROUND_X_NEG
+daten[280] = 0x4000;    // BA
+daten[281] = 0x0124;    // ROUND_X_ABS
+
+// ROUND_X_NEG
+daten[282] = 0x3540;    // NOT
+daten[283] = 0x0000;
+daten[284] = 0x3440;    // ADD
+daten[285] = 0x0001;
+daten[286] = 0x2800;    // STAM - abs numerator
+daten[287] = 0x033F;
+daten[288] = 0x1400;    // LDA
+daten[289] = 0x0001;
+daten[290] = 0x2800;    // STAM - sign=1
+daten[291] = 0x0341;
+
+// ROUND_X_ABS
+daten[292] = 0x1800;    // LDAM - D
+daten[293] = 0x033E;
+daten[294] = 0x3580;    // SHR - D/2
+daten[295] = 0x0000;
+daten[296] = 0x2800;    // STAM - patch +D/2
+daten[297] = 0x0137;    // ROUND_X_ADD_HALF+1
+daten[298] = 0x1800;    // LDAM - abs N
+daten[299] = 0x033F;
+daten[300] = 0x35C0;    // SHL - 2N
+daten[301] = 0x0000;
+daten[302] = 0x2800;    // STAM - patch +2N
+daten[303] = 0x0135;    // ROUND_X_ADD_2N+1
+daten[304] = 0x35C0;    // SHL - 4N
+daten[305] = 0x0000;
+daten[306] = 0x35C0;    // SHL - 8N
+daten[307] = 0x0000;
+
+// ROUND_X_ADD_2N
+daten[308] = 0x3440;    // ADD - 10N
+daten[309] = 0x0000;
+
+// ROUND_X_ADD_HALF
+daten[310] = 0x3440;    // ADD - rounding
+daten[311] = 0x0000;
+daten[312] = 0x2800;    // STAM - DIV_N
+daten[313] = 0x032A;
+daten[314] = 0x1800;    // LDAM
+daten[315] = 0x033E;
+daten[316] = 0x2800;    // STAM - DIV_D
+daten[317] = 0x032B;
+daten[318] = 0x5000;    // CALL
+daten[319] = 0x02BC;    // DIV
+daten[320] = 0x1800;    // LDAM - sign
+daten[321] = 0x0341;
+daten[322] = 0x4018;    // BZ
+daten[323] = 0x014E;    // ROUND_X_POS
+daten[324] = 0x1800;    // LDAM
+daten[325] = 0x032C;
+daten[326] = 0x3540;    // NOT
+daten[327] = 0x0000;
+daten[328] = 0x3440;    // ADD
+daten[329] = 0x0001;
+daten[330] = 0x2800;    // STAM - negative result
+daten[331] = 0x0384;
+daten[332] = 0x4000;    // BA
+daten[333] = 0x0154;    // ROUND_Y
+
+// ROUND_X_POS
+daten[334] = 0x1800;    // LDAM
+daten[335] = 0x032C;
+daten[336] = 0x2800;    // STAM - positive result
+daten[337] = 0x0384;
+daten[338] = 0x4000;    // BA
+daten[339] = 0x0154;    // ROUND_Y
+
+// ROUND_Y
+daten[340] = 0x1400;    // LDA
+daten[341] = 0x0000;
+daten[342] = 0x2800;    // STAM - sign=0
+daten[343] = 0x0341;
+daten[344] = 0x1800;    // LDAM
+daten[345] = 0x0340;
+daten[346] = 0x4010;    // BN
+daten[347] = 0x015E;    // ROUND_Y_NEG
+daten[348] = 0x4000;    // BA
+daten[349] = 0x0168;    // ROUND_Y_ABS
+
+// ROUND_Y_NEG
+daten[350] = 0x3540;    // NOT
+daten[351] = 0x0000;
+daten[352] = 0x3440;    // ADD
+daten[353] = 0x0001;
+daten[354] = 0x2800;    // STAM - abs numerator
+daten[355] = 0x0340;
+daten[356] = 0x1400;    // LDA
+daten[357] = 0x0001;
+daten[358] = 0x2800;    // STAM - sign=1
+daten[359] = 0x0341;
+
+// ROUND_Y_ABS
+daten[360] = 0x1800;    // LDAM - D
+daten[361] = 0x033E;
+daten[362] = 0x3580;    // SHR - D/2
+daten[363] = 0x0000;
+daten[364] = 0x2800;    // STAM - patch +D/2
+daten[365] = 0x017B;    // ROUND_Y_ADD_HALF+1
+daten[366] = 0x1800;    // LDAM - abs N
+daten[367] = 0x0340;
+daten[368] = 0x35C0;    // SHL - 2N
+daten[369] = 0x0000;
+daten[370] = 0x2800;    // STAM - patch +2N
+daten[371] = 0x0179;    // ROUND_Y_ADD_2N+1
+daten[372] = 0x35C0;    // SHL - 4N
+daten[373] = 0x0000;
+daten[374] = 0x35C0;    // SHL - 8N
+daten[375] = 0x0000;
+
+// ROUND_Y_ADD_2N
+daten[376] = 0x3440;    // ADD - 10N
+daten[377] = 0x0000;
+
+// ROUND_Y_ADD_HALF
+daten[378] = 0x3440;    // ADD - rounding
+daten[379] = 0x0000;
+daten[380] = 0x2800;    // STAM - DIV_N
+daten[381] = 0x032A;
+daten[382] = 0x1800;    // LDAM
+daten[383] = 0x033E;
+daten[384] = 0x2800;    // STAM - DIV_D
+daten[385] = 0x032B;
+daten[386] = 0x5000;    // CALL
+daten[387] = 0x02BC;    // DIV
+daten[388] = 0x1800;    // LDAM - sign
+daten[389] = 0x0341;
+daten[390] = 0x4018;    // BZ
+daten[391] = 0x0192;    // ROUND_Y_POS
+daten[392] = 0x1800;    // LDAM
+daten[393] = 0x032C;
+daten[394] = 0x3540;    // NOT
+daten[395] = 0x0000;
+daten[396] = 0x3440;    // ADD
+daten[397] = 0x0001;
+daten[398] = 0x2800;    // STAM - negative result
+daten[399] = 0x0385;
+daten[400] = 0x4000;    // BA
+daten[401] = 0x01A0;    // DONE
+
+// ROUND_Y_POS
+daten[402] = 0x1800;    // LDAM
+daten[403] = 0x032C;
+daten[404] = 0x2800;    // STAM - positive result
+daten[405] = 0x0385;
+daten[406] = 0x4000;    // BA
+daten[407] = 0x01A0;    // DONE
+
+// ERROR
+daten[408] = 0x1400;    // LDA - error code
+daten[409] = 0x7FFF;
+daten[410] = 0x2800;    // STAM
+daten[411] = 0x0384;
+daten[412] = 0x2800;    // STAM
+daten[413] = 0x0385;
+daten[414] = 0x4000;    // BA
+daten[415] = 0x01A0;    // DONE
+
+// DONE
+// Result representation: signed fixed-point x10/y10.
+// Example here: X10=37 means x=3.7; Y10=-13 means y=-1.3.
+// Visual order is X on the left 16 pixels, Y on the right 16 pixels.
+// Because the display memory stores the right half first:
+//   daten[1014] = Y10
+//   daten[1015] = X10
+
+daten[416] = 0x1800;    // LDAM X10
+daten[417] = 0x0384;    // 900
+daten[418] = 0x2800;    // STAM row 27 left
+daten[419] = 0x03F7;    // 1015
+
+daten[420] = 0x1800;    // LDAM Y10
+daten[421] = 0x0385;    // 901
+daten[422] = 0x2800;    // STAM row 27 right
+daten[423] = 0x03F6;    // 1014
+
+daten[424] = 0xF000;    // NOP - result remains on display; stop clock here
+
+
+// ===== MUL (signed 16-bit inputs, safe here for -39..39) =====
+
+daten[600] = 0x1400;    // LDA 0
+daten[601] = 0x0000;
+daten[602] = 0x2800;    // STAM MUL_SIGN
+daten[603] = 0x032F;
+daten[604] = 0x1800;    // LDAM MUL_A
+daten[605] = 0x0320;
+daten[606] = 0x4010;    // BN A<0
+daten[607] = 0x0266;
+daten[608] = 0x1800;    // LDAM MUL_B
+daten[609] = 0x0321;
+daten[610] = 0x4010;    // BN B<0
+daten[611] = 0x0272;
+daten[612] = 0x4000;    // BA MUL_LOOP
+daten[613] = 0x0288;
+daten[614] = 0x3540;    // NOT
+daten[615] = 0x0000;
+daten[616] = 0x3440;    // ADD 1
+daten[617] = 0x0001;
+daten[618] = 0x2800;    // STAM abs(A)
+daten[619] = 0x0320;
+daten[620] = 0x1400;    // LDA 1
+daten[621] = 0x0001;
+daten[622] = 0x2800;    // STAM sign=1
+daten[623] = 0x032F;
+daten[624] = 0x4000;    // BA A_OK
+daten[625] = 0x0260;
+daten[626] = 0x3540;    // NOT
+daten[627] = 0x0000;
+daten[628] = 0x3440;    // ADD 1
+daten[629] = 0x0001;
+daten[630] = 0x2800;    // STAM abs(B)
+daten[631] = 0x0321;
+daten[632] = 0x1800;    // LDAM sign
+daten[633] = 0x032F;
+daten[634] = 0x4018;    // BZ sign was 0
+daten[635] = 0x0282;
+daten[636] = 0x1400;    // LDA 0
+daten[637] = 0x0000;
+daten[638] = 0x2800;    // STAM sign=0
+daten[639] = 0x032F;
+daten[640] = 0x4000;    // BA loop
+daten[641] = 0x0288;
+daten[642] = 0x1400;    // LDA 1
+daten[643] = 0x0001;
+daten[644] = 0x2800;    // STAM sign=1
+daten[645] = 0x032F;
+daten[646] = 0x4000;    // BA loop
+daten[647] = 0x0288;
+daten[648] = 0x1800;    // LDAM b
+daten[649] = 0x0321;
+daten[650] = 0x4018;    // BZ done
+daten[651] = 0x02A6;
+daten[652] = 0x4020;    // BE b even
+daten[653] = 0x0298;
+daten[654] = 0x1800;    // LDAM a
+daten[655] = 0x0320;
+daten[656] = 0x2800;    // STAM patch MUL_ADD+1
+daten[657] = 0x0295;
+daten[658] = 0x1800;    // LDAM result
+daten[659] = 0x0322;
+daten[660] = 0x3440;    // ADD patched a
+daten[661] = 0x0000;
+daten[662] = 0x2800;    // STAM result
+daten[663] = 0x0322;
+daten[664] = 0x1800;    // LDAM a
+daten[665] = 0x0320;
+daten[666] = 0x35C0;    // SHL
+daten[667] = 0x0000;
+daten[668] = 0x2800;    // STAM a
+daten[669] = 0x0320;
+daten[670] = 0x1800;    // LDAM b
+daten[671] = 0x0321;
+daten[672] = 0x3580;    // SHR
+daten[673] = 0x0000;
+daten[674] = 0x2800;    // STAM b
+daten[675] = 0x0321;
+daten[676] = 0x4000;    // BA loop
+daten[677] = 0x0288;
+daten[678] = 0x1800;    // LDAM sign
+daten[679] = 0x032F;
+daten[680] = 0x4018;    // BZ positive
+daten[681] = 0x02B1;
+daten[682] = 0x1800;    // LDAM result
+daten[683] = 0x0322;
+daten[684] = 0x3540;    // NOT
+daten[685] = 0x0000;
+daten[686] = 0x3440;    // ADD 1
+daten[687] = 0x0001;
+daten[688] = 0x6000;    // RET negative
+daten[689] = 0x1800;    // LDAM result
+daten[690] = 0x0322;
+daten[691] = 0x6000;    // RET positive
+
+// ===== DIV =====
+
+// DIV
+daten[700] = 0x1400;    // LDA
+daten[701] = 0x0000;
+daten[702] = 0x2800;    // STAM - Q=0
+daten[703] = 0x032C;
+daten[704] = 0x1400;    // LDA
+daten[705] = 0x0000;
+daten[706] = 0x2800;    // STAM - REM=0
+daten[707] = 0x032D;
+daten[708] = 0x1400;    // LDA
+daten[709] = 0x000F;
+daten[710] = 0x2800;    // STAM - 15 input bits
+daten[711] = 0x032E;
+daten[712] = 0x1800;    // LDAM - D
+daten[713] = 0x032B;
+daten[714] = 0x3540;    // NOT
+daten[715] = 0x0000;
+daten[716] = 0x3440;    // ADD
+daten[717] = 0x0001;
+daten[718] = 0x2800;    // STAM - patch -D
+daten[719] = 0x02F1;    // DIV_COMPARE+1
+
+// DIV_LOOP
+daten[720] = 0x1800;    // LDAM - N bitstream
+daten[721] = 0x032A;
+daten[722] = 0x35C0;    // SHL
+daten[723] = 0x0000;
+daten[724] = 0x2800;    // STAM
+daten[725] = 0x032A;
+daten[726] = 0x4010;    // BN
+daten[727] = 0x02E0;    // DIV_BIT1
+
+// DIV_BIT0
+daten[728] = 0x1800;    // LDAM - REM
+daten[729] = 0x032D;
+daten[730] = 0x35C0;    // SHL
+daten[731] = 0x0000;
+daten[732] = 0x2800;    // STAM
+daten[733] = 0x032D;
+daten[734] = 0x4000;    // BA
+daten[735] = 0x02E8;    // DIV_AFTER_BIT
+
+// DIV_BIT1
+daten[736] = 0x1800;    // LDAM - REM
+daten[737] = 0x032D;
+daten[738] = 0x35C0;    // SHL
+daten[739] = 0x0000;
+daten[740] = 0x3440;    // ADD
+daten[741] = 0x0001;
+daten[742] = 0x2800;    // STAM
+daten[743] = 0x032D;
+
+// DIV_AFTER_BIT
+daten[744] = 0x1800;    // LDAM - Q
+daten[745] = 0x032C;
+daten[746] = 0x35C0;    // SHL
+daten[747] = 0x0000;
+daten[748] = 0x2800;    // STAM
+daten[749] = 0x032C;
+daten[750] = 0x1800;    // LDAM - REM
+daten[751] = 0x032D;
+
+// DIV_COMPARE
+daten[752] = 0x3440;    // ADD - REM-D
+daten[753] = 0x0000;
+daten[754] = 0x4010;    // BN
+daten[755] = 0x02FC;    // DIV_NO_SUB
+daten[756] = 0x2800;    // STAM - REM -= D
+daten[757] = 0x032D;
+daten[758] = 0x1800;    // LDAM
+daten[759] = 0x032C;
+daten[760] = 0x3440;    // ADD
+daten[761] = 0x0001;
+daten[762] = 0x2800;    // STAM - set quotient bit
+daten[763] = 0x032C;
+
+// DIV_NO_SUB
+daten[764] = 0x1800;    // LDAM
+daten[765] = 0x032E;
+daten[766] = 0x3440;    // ADD
+daten[767] = 0xFFFF;
+daten[768] = 0x2800;    // STAM
+daten[769] = 0x032E;
+daten[770] = 0x4018;    // BZ
+daten[771] = 0x0306;    // DIV_DONE
+daten[772] = 0x4000;    // BA
+daten[773] = 0x02D0;    // DIV_LOOP
+
+// DIV_DONE
+daten[774] = 0x1800;    // LDAM
+daten[775] = 0x032C;
+daten[776] = 0x6000;    // RET
+
+
+// ===== VARIABLES =====
+daten[800] = 0x0000;    // MUL_A
+daten[801] = 0x0000;    // MUL_B
+daten[802] = 0x0000;    // MUL_R
+daten[810] = 0x0000;    // DIV_N (destroyed)
+daten[811] = 0x0001;    // DIV_D (>0)
+daten[812] = 0x0000;    // DIV_Q
+daten[813] = 0x0000;    // DIV_REM
+daten[814] = 0x0000;    // DIV_COUNT
+daten[815] = 0x0000;    // MUL_SIGN
+daten[820] = 0x0000;    // a*e
+daten[821] = 0x0000;    // b*d
+daten[822] = 0x0000;    // c*e
+daten[823] = 0x0000;    // b*f
+daten[824] = 0x0000;    // a*f
+daten[825] = 0x0000;    // c*d
+daten[830] = 0x0000;    // D
+daten[831] = 0x0000;    // Nx
+daten[832] = 0x0000;    // Ny
+daten[833] = 0x0000;    // SIGN scratch
+daten[900] = 0x0000;    // X10 result
+daten[901] = 0x0000;    // Y10 result
+// ===== DISPLAY RAM INITIAL STATE =====
+daten[960] = 0x0000;
+daten[961] = 0x0000;
+daten[962] = 0x0000;
+daten[963] = 0x0000;
+daten[964] = 0x0000;
+daten[965] = 0x0000;
+daten[966] = 0x0000;
+daten[967] = 0x0000;
+daten[968] = 0x0000;
+daten[969] = 0x0000;
+daten[970] = 0x0000;
+daten[971] = 0x0000;
+daten[972] = 0x0000;
+daten[973] = 0x0000;
+daten[974] = 0x0000;
+daten[975] = 0x0000;
+daten[976] = 0x0000;
+daten[977] = 0x0000;
+daten[978] = 0x0000;
+daten[979] = 0x0000;
+daten[980] = 0x0000;
+daten[981] = 0x0000;
+daten[982] = 0x0000;
+daten[983] = 0x0000;
+daten[984] = 0x0000;
+daten[985] = 0x0000;
+daten[986] = 0x0000;
+daten[987] = 0x0000;
+daten[988] = 0x0000;
+daten[989] = 0x0000;
+daten[990] = 0x0000;
+daten[991] = 0x0000;
+daten[992] = 0x0000;
+daten[993] = 0x0000;
+daten[994] = 0x0000;
+daten[995] = 0x0000;
+daten[996] = 0x0000;
+daten[997] = 0x0000;
+daten[998] = 0x0000;
+daten[999] = 0x0000;
+daten[1000] = 0x0000;
+daten[1001] = 0x0000;
+daten[1002] = 0x0000;
+daten[1003] = 0x0000;
+daten[1004] = 0x0000;
+daten[1005] = 0x0000;
+daten[1006] = 0x0000;
+daten[1007] = 0x0000;
+daten[1008] = 0x0000;
+daten[1009] = 0x0000;
+daten[1010] = 0x0000;
+daten[1011] = 0x0000;
+daten[1012] = 0x0000;
+daten[1013] = 0x0000;
+daten[1014] = 0x0000;
+daten[1015] = 0x0000;
+daten[1016] = 0x0000;
+daten[1017] = 0x0000;
+daten[1018] = 0x0000;
+daten[1019] = 0x0000;
+daten[1020] = 0x0000;
+daten[1021] = 0x0000;
+daten[1022] = 0x0000;
+daten[1023] = 0x0000;
