@@ -3,13 +3,22 @@ name: Clack-Studio CI
 on:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout Clack Studio
         uses: actions/checkout@v4
+        with:
+          path: clack-studio
+
+      - name: Checkout Clack Basic Dependency
+        uses: actions/checkout@v4
+        with:
+          repository: relay-computing/clack-basic
+          path: clack-basic
 
       - name: Toolchain Info
         run: |
@@ -20,11 +29,12 @@ jobs:
 
       - name: Install Frontend Dependencies & Build
         run: |
-          cd frontend
+          cd clack-studio/frontend
           npm install
           npm run build
 
       - name: Compile Go Binary
         run: |
-          go build -o clack-studio .
-          ls -lh clack-studio
+          cd clack-studio
+          go build -v -o bin/clack-studio .
+          ls -lh bin/clack-studio
