@@ -9,16 +9,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Clack Studio
+      - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          path: clack-studio
 
-      - name: Checkout Clack Basic Dependency
-        uses: actions/checkout@v4
-        with:
-          repository: relay-computing/clack-basic
-          path: clack-basic
+      - name: Clone Clack-Basic Dependency
+        run: |
+          git clone https://git.latentforge.dev/relay-computing/clack-basic.git ../clack-basic
 
       - name: Toolchain Info
         run: |
@@ -29,12 +25,11 @@ jobs:
 
       - name: Install Frontend Dependencies & Build
         run: |
-          cd clack-studio/frontend
+          cd frontend
           npm install
           npm run build
 
       - name: Compile Go Binary
         run: |
-          cd clack-studio
           go build -v -o bin/clack-studio .
           ls -lh bin/clack-studio
