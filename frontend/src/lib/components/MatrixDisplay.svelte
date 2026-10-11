@@ -149,9 +149,15 @@
 
           for (let bit = 15; bit >= 0; bit--) {
             // Hardware 32x32: Word 0 (wo=0, addr 960) ist rechte Hälfte (X=16..31), Word 1 (wo=1, addr 961) ist linke Hälfte (X=0..15)
-            const x = (res === 32)
-              ? ((1 - wo) * 16) + (15 - bit)
-              : (wo * 16) + (15 - bit);
+            // Linear 32x32: Word 0 ist linke Hälfte, Word 1 ist rechte Hälfte
+            let x;
+            if (res === 32) {
+              const isHw = settings.matrixLayout === 'hardware';
+              const colWord = isHw ? (1 - wo) : wo;
+              x = (colWord * 16) + (15 - bit);
+            } else {
+              x = (wo * 16) + (15 - bit);
+            }
             if (x >= res) break;
 
             const isSet = (word >> bit) & 1;
@@ -239,6 +245,16 @@
         <option value={32}>32 × 32 (4x Hardware Matrix ab 0x03C0 / 960)</option>
         <option value={64}>64 × 64 (Full Framebuffer ab 0x0300 / 768)</option>
       </select>
+      {#if settings.matrixResolution === 32}
+        <select 
+          value={settings.matrixLayout} 
+          onchange={(e) => settings.setMatrixLayout(e.target.value)}
+          title="Wort-Reihenfolge: Hardware-Relais (W0 rechts, W1 links) vs. Linear (W0 links, W1 rechts)"
+        >
+          <option value="hardware">⚡ Hardware (W0 rechts / W1 links)</option>
+          <option value="linear">↔️ Linear (W0 links / W1 rechts)</option>
+        </select>
+      {/if}
       <select 
         value={settings.matrixColorMode} 
         onchange={(e) => settings.setMatrixColorMode(e.target.value)}

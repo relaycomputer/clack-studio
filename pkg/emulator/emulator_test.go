@@ -1,6 +1,7 @@
 package emulator
 
 import (
+	"os"
 	"testing"
 )
 
@@ -70,3 +71,44 @@ func TestEmulator_CarryOnShifts(t *testing.T) {
 		t.Errorf("Expected Carry=1 after SHL of 0x8001, got %d", m.State.Carry)
 	}
 }
+
+func TestEmulator_Gleichung2x2(t *testing.T) {
+	code, err := os.ReadFile("/home/veitscherbub/work/relay-computing/gleichung_2x2_display_binary.txt")
+	if err != nil {
+		t.Skipf("gleichung_2x2_display_binary.txt not found: %v", err)
+	}
+
+	m := NewMachine()
+	loaded, err := m.LoadProgram(string(code))
+	if err != nil {
+		t.Fatalf("LoadProgram error: %v", err)
+	}
+	if loaded == 0 {
+		t.Fatalf("Failed to parse words from gleichung_2x2_display_binary.txt")
+	}
+
+	for i := 0; i < 50000; i++ {
+		if !m.Step() {
+			break
+		}
+	}
+
+	// Results: daten[900] = X10 (37 = 0x0025), daten[901] = Y10 (-13 = 0xFFF3)
+	if m.Memory[900] != 37 {
+		t.Errorf("Expected daten[900] (X10) = 37, got %d (0x%04X)", int16(m.Memory[900]), m.Memory[900])
+	}
+	if int16(m.Memory[901]) != -13 {
+		t.Errorf("Expected daten[901] (Y10) = -13, got %d (0x%04X)", int16(m.Memory[901]), m.Memory[901])
+	}
+
+	// Display row 27:
+	// daten[1014] = row 27 right (Y10 = -13 = 0xFFF3)
+	// daten[1015] = row 27 left  (X10 =  37 = 0x0025)
+	if int16(m.Memory[1014]) != -13 {
+		t.Errorf("Expected row 27 right daten[1014] = -13, got %d (0x%04X)", int16(m.Memory[1014]), m.Memory[1014])
+	}
+	if m.Memory[1015] != 37 {
+		t.Errorf("Expected row 27 left daten[1015] = 37, got %d (0x%04X)", int16(m.Memory[1015]), m.Memory[1015])
+	}
+}
+
