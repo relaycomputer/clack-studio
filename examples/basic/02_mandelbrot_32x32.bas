@@ -122,19 +122,16 @@ LET ROW = ROW SHL 1
 
 PIXEL_DONE:
 
-REM Clack-Studio stellt die beiden 16-Pixel-Woerter in der
-REM logischen X-Reihenfolge dar:
-REM   X=0..15  -> erstes Wort der Zeile
-REM   X=16..31 -> zweites Wort der Zeile
-REM
-REM Daher fuer die Simulatoranzeige:
+REM Hardware 32x32 Matrix Zuordnung:
+REM X=0..15  (Linke Haelfte)  -> Wort 1 (DA + 1)
+REM X=16..31 (Rechte Haelfte) -> Wort 0 (DA)
 IF X = 15 THEN
-    POKE DA, ROW
+    POKE DA + 1, ROW
     LET ROW = 0
 END IF
 
 IF X = 31 THEN
-    POKE DA + 1, ROW
+    POKE DA, ROW
 END IF
 
 LET X = X + 1

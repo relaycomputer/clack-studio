@@ -5,7 +5,7 @@
 export class SettingsStore {
   theme = $state('theme-amber');
   matrixResolution = $state(32); // 32 = 4x Hardware Matrix ab 960 (0x03C0), 64 = Full Framebuffer ab 768
-  matrixLayout = $state('linear'); // 'linear' (W0 links / W1 rechts) oder 'hardware' (W0 rechts / W1 links)
+  matrixLayout = $state('hardware'); // 'hardware' (W0 rechts / W1 links - Real Hardware Standard), 'linear' (W0 links / W1 rechts)
   matrixColorMode = $state('theme'); // 'theme' (Monochrom Relais), 'mandelbrot', 'rgb16', 'cyberpunk', 'rainbow'
   matrixMode = $state('1bit'); // '1bit' (16 px/word) or '4bit' (4 px/word, 16 colors)
   soundEnabled = $state(true);
@@ -51,7 +51,7 @@ export class SettingsStore {
 
   setRelayDefaults() {
     this.matrixResolution = 32;
-    this.matrixLayout = 'linear';
+    this.matrixLayout = 'hardware';
     this.matrixColorMode = 'theme';
     this.matrixMode = '1bit';
   }
