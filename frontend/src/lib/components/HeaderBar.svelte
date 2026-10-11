@@ -1,12 +1,13 @@
 <script>
+  import { onMount, onDestroy } from 'svelte';
   import { cpu } from '../stores/cpuStore.svelte.js';
   import { settings } from '../stores/settingsStore.svelte.js';
 
   let signedAccu = $derived(cpu.accu > 32767 ? cpu.accu - 65536 : cpu.accu);
   
-  // Format physical relay hardware time (~50 ms pro Zyklus / 20 Hz)
+  // Format physical relay hardware time (70 ms pro Zyklus / 14.3 Hz)
   let relayTimeSec = $derived.by(() => {
-    const totalSec = cpu.cycles * 0.05; // 50ms pro Takt
+    const totalSec = cpu.cycles * 0.07; // 70ms pro Takt
     if (totalSec < 60) {
       return `${totalSec.toFixed(2)} s`;
     }
@@ -23,6 +24,48 @@
   let hexPC = $derived('0x' + cpu.pc.toString(16).toUpperCase().padStart(4, '0'));
   let hexAccu = $derived('0x' + cpu.accu.toString(16).toUpperCase().padStart(4, '0'));
   let hexStack = $derived('0x' + cpu.stack.toString(16).toUpperCase().padStart(4, '0'));
+
+  let isStandalone = $state(false);
+  let isShutDown = $state(false);
+  let keepaliveTimer = null;
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/info');
+      if (res.ok) {
+        const info = await res.json();
+        if (info.standalone) {
+          isStandalone = true;
+          // Initialer Keepalive
+          fetch('/api/keepalive', { method: 'POST' }).catch(() => {});
+          // Zyklischer Heartbeat alle 3 Sekunden
+          keepaliveTimer = setInterval(() => {
+            fetch('/api/keepalive', { method: 'POST' }).catch(() => {});
+          }, 3000);
+
+          window.addEventListener('beforeunload', () => {
+            navigator.sendBeacon('/api/leave');
+          });
+        }
+      }
+    } catch (e) {
+      isStandalone = false;
+    }
+  });
+
+  onDestroy(() => {
+    if (keepaliveTimer) clearInterval(keepaliveTimer);
+  });
+
+  async function handleShutdownClick() {
+    if (confirm("Möchtest du Clack-Studio wirklich beenden und den Hintergrundprozess schließen?")) {
+      try {
+        await fetch('/api/shutdown', { method: 'POST' });
+      } catch (e) {}
+      isShutDown = true;
+      if (keepaliveTimer) clearInterval(keepaliveTimer);
+    }
+  }
 </script>
 
 <header class="header-bar">
@@ -55,7 +98,7 @@
       <span class="label">CYCLES</span>
       <span class="value">{cpu.cycles}</span>
     </div>
-    <div class="metric-card card-time" title="Berechnete Originaldauer auf echter 20 Hz Relais-Hardware (50 ms pro Hardware-Takt)">
+    <div class="metric-card card-time" title="Berechnete Originaldauer auf echter 14.3 Hz Relais-Hardware (70 ms pro Hardware-Takt)">
       <span class="label">RELAIS-ZEIT</span>
       <span class="value">{relayTimeSec}</span>
     </div>
@@ -85,5 +128,27 @@
         <option value="theme-ruby">Rubin Rot</option>
       </select>
     </div>
+
+    {#if isStandalone}
+      <button 
+        class="btn-shutdown" 
+        title="Clack-Studio Server sauber beenden und Prozess stoppen"
+        onclick={handleShutdownClick}
+      >
+        <span class="icon">🛑</span>
+        <span class="txt">Beenden</span>
+      </button>
+    {/if}
   </div>
 </header>
+
+{#if isShutDown}
+  <div class="shutdown-overlay">
+    <div class="shutdown-dialog">
+      <div class="shutdown-icon">⚡</div>
+      <h2>Clack-Studio wurde beendet</h2>
+      <p>Der Hintergrundprozess wurde sauber geschlossen.</p>
+      <p class="hint">Du kannst dieses Browser-Fenster jetzt schließen.</p>
+    </div>
+  </div>
+{/if}

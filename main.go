@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sync"
 	"time"
 
 	"clack-studio/pkg/emulator"
@@ -28,7 +29,10 @@ import (
 var webFS embed.FS
 
 type Server struct {
-	machine *emulator.Machine
+	machine       *emulator.Machine
+	lastHeartbeat int64
+	hasConnected  bool
+	mu            sync.Mutex
 }
 
 func openBrowser(url string) {
@@ -50,6 +54,7 @@ func main() {
 	port := flag.Int("port", 8080, "HTTP server port")
 	loadPath := flag.String("load", "", "Optional path to daten[...] file to load at startup")
 	autoOpen := flag.Bool("open", true, "Open default browser automatically on startup")
+	autoExit := flag.Bool("auto-exit", true, "Automatically exit when all browser tabs are closed")
 	flag.Parse()
 
 	m := emulator.NewMachine()
@@ -63,9 +68,18 @@ func main() {
 		}
 	}
 
-	srv := &Server{machine: m}
+	srv := &Server{
+		machine:       m,
+		lastHeartbeat: time.Now().Unix(),
+	}
 
 	mux := http.NewServeMux()
+
+	// System & Process Control Endpoints
+	mux.HandleFunc("/api/info", srv.handleInfo)
+	mux.HandleFunc("/api/keepalive", srv.handleKeepAlive)
+	mux.HandleFunc("/api/leave", srv.handleLeave)
+	mux.HandleFunc("/api/shutdown", srv.handleShutdown)
 
 	// API Endpoints
 	mux.HandleFunc("/api/state", srv.handleState)
@@ -94,9 +108,35 @@ func main() {
 	}
 	addr := fmt.Sprintf("%s:%d", *host, *port)
 	fmt.Println("==================================================================")
-	fmt.Printf("⚡ CLACK-STUDIO (v2.5.3): 16-Bit Relay Computer Simulator & Lab\n")
+	fmt.Printf("⚡ CLACK-STUDIO (v2.5.7): 16-Bit Relay Computer Simulator & Lab\n")
 	fmt.Printf("⚡ Server running on: %s (Bind: %s)\n", url, addr)
+	if *autoExit {
+		fmt.Printf("⚡ Auto-Exit: Aktiv (beendet Prozess automatisch bei Tab-Schließen)\n")
+	}
 	fmt.Println("==================================================================")
+
+	if *autoExit {
+		go func() {
+			// Initial grace period of 25 seconds for the browser to open and load
+			time.Sleep(25 * time.Second)
+			ticker := time.NewTicker(2 * time.Second)
+			defer ticker.Stop()
+			for range ticker.C {
+				srv.mu.Lock()
+				connected := srv.hasConnected
+				last := srv.lastHeartbeat
+				srv.mu.Unlock()
+
+				if connected {
+					diff := time.Now().Unix() - last
+					if diff >= 8 { // 8 seconds without heartbeat from browser tab
+						fmt.Println("\n⚡ Kein aktiver Browser-Tab mehr verbunden (Timeout 8s). Clack-Studio beendet sich automatisch.")
+						os.Exit(0)
+					}
+				}
+			}
+		}()
+	}
 
 	if *autoOpen {
 		go openBrowser(url)
@@ -572,5 +612,50 @@ func (s *Server) handleDecompile(w http.ResponseWriter, r *http.Request) {
 		"basicCode":  basicCode,
 		"durationMs": float64(duration.Microseconds()) / 1000.0,
 	})
+}
+
+func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"standalone": true,
+		"version":    "2.5.7",
+		"os":         runtime.GOOS,
+		"arch":       runtime.GOARCH,
+		"pid":        os.Getpid(),
+	})
+}
+
+func (s *Server) handleKeepAlive(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	s.lastHeartbeat = time.Now().Unix()
+	s.hasConnected = true
+	s.mu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"ok": true,
+	})
+}
+
+func (s *Server) handleLeave(w http.ResponseWriter, r *http.Request) {
+	// A browser tab reported that it is unloading
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"ok": true,
+	})
+}
+
+func (s *Server) handleShutdown(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"success": true,
+		"message": "Clack-Studio Server wird beendet...",
+	})
+
+	log.Println("🛑 Beenden angefordert durch Web-Frontend. Clack-Studio schließt...")
+	go func() {
+		time.Sleep(200 * time.Millisecond)
+		os.Exit(0)
+	}()
 }
 

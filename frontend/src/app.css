@@ -237,6 +237,74 @@ html, body {
   color: var(--text-bright);
 }
 
+.btn-shutdown {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #f87171;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-shutdown:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.shutdown-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 22, 0.94);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.shutdown-dialog {
+  background: #111822;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(239, 68, 68, 0.25);
+  padding: 36px 44px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 440px;
+}
+
+.shutdown-dialog .shutdown-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.shutdown-dialog h2 {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  color: var(--text-bright);
+  margin-bottom: 8px;
+}
+
+.shutdown-dialog p {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.shutdown-dialog .hint {
+  font-size: 13px;
+  color: #f87171;
+  font-weight: 600;
+}
+
 .theme-selector {
   display: flex;
   align-items: center;

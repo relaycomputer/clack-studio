@@ -80,7 +80,7 @@
     </button>
   </div>
 
-  <div class="speed-control" title="Original-Relaisrechner: 20 Hz = 50 ms pro Befehl">
+  <div class="speed-control" title="Original-Relaisrechner: 14.3 Hz = 70 ms pro Takt">
     <label for="slider-speed">Takt:</label>
     <input 
       type="range" 
