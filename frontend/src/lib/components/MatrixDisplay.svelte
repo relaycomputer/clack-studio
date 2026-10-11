@@ -148,7 +148,10 @@
           const word = (addr < cpu.memory.length) ? cpu.memory[addr] : 0;
 
           for (let bit = 15; bit >= 0; bit--) {
-            const x = (wo * 16) + (15 - bit);
+            // Hardware 32x32: Word 0 (wo=0, addr 960) ist rechte Hälfte (X=16..31), Word 1 (wo=1, addr 961) ist linke Hälfte (X=0..15)
+            const x = (res === 32)
+              ? ((1 - wo) * 16) + (15 - bit)
+              : (wo * 16) + (15 - bit);
             if (x >= res) break;
 
             const isSet = (word >> bit) & 1;
