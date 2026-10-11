@@ -420,8 +420,8 @@ export class CPUStore {
         break;
 
       default:
-        this.pc = (this.pc + 1) % MEM_SIZE;
-        break;
+        this.halt(`Halt / Unbekannter Opcode 0x${(cmd || 0).toString(16).toUpperCase().padStart(4, '0')} bei PC 0x${currentPC.toString(16).toUpperCase().padStart(3, '0')}`);
+        return false;
     }
 
     // Update ALU flags
