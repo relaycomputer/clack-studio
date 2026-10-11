@@ -61,14 +61,33 @@ export class CPUStore {
   isRunning = $state(false);
   timerId = null;
 
+  // Breakpoints
+  breakpoints = $state(new Set());
+  hitBreakpoint = $state(null);
+
+  toggleBreakpoint(addr) {
+    const s = new Set(this.breakpoints);
+    if (s.has(addr)) {
+      s.delete(addr);
+    } else {
+      s.add(addr);
+    }
+    this.breakpoints = s;
+  }
+
+  clearBreakpoints() {
+    this.breakpoints = new Set();
+    this.hitBreakpoint = null;
+  }
+
   getInstructionCycles(cmd) {
     switch (cmd) {
-      case OP.NOP: return 1;
-      case OP.LDA: return 2;   // Fetch Opcode + Fetch Immediate
-      case OP.LDAM: return 3;  // Fetch Opcode + Fetch Address + Read RAM
-      case OP.LDAMM: return 4; // Fetch Opcode + Fetch Pointer + Read Pointer Target + Read Effective RAM
-      case OP.STAM: return 3;  // Fetch Opcode + Fetch Address + Write RAM
-      case OP.STAMM: return 4; // Fetch Opcode + Fetch Pointer + Read Pointer Target + Write Effective RAM
+      case OP.NOP: return 2;   // Fetch Opcode (2 Takte)
+      case OP.LDA: return 4;   // Fetch Opcode + Fetch Immediate (4 Takte)
+      case OP.LDAM: return 6;  // Fetch Opcode + Fetch Address + Read RAM (6 Takte)
+      case OP.LDAMM: return 8; // Fetch Opcode + Fetch Pointer + Read Pointer Target + Read Effective RAM (8 Takte)
+      case OP.STAM: return 6;  // Fetch Opcode + Fetch Address + Write RAM (6 Takte)
+      case OP.STAMM: return 8; // Fetch Opcode + Fetch Pointer + Read Pointer Target + Write Effective RAM (8 Takte)
       case OP.ADD:
       case OP.AND:
       case OP.OR:
@@ -80,15 +99,16 @@ export class CPUStore {
       case OP.BN:
       case OP.BE:
       case OP.BZ:
-        return 2;              // Fetch Opcode + Fetch Operand / Target & ALU latch
-      case OP.CALL: return 3;  // Fetch Opcode + Fetch Target + Save Stack
-      case OP.RET: return 2;   // Fetch Opcode + Load Stack to PC
-      default: return 1;
+        return 4;              // Fetch Opcode + Fetch Operand / Target & ALU latch (4 Takte)
+      case OP.CALL: return 4;  // Fetch Opcode + Fetch Target + Save Stack (4 Takte)
+      case OP.RET: return 5;   // Fetch Opcode + Load Stack to PC (5 Takte)
+      default: return 2;
     }
   }
 
   reset() {
     this.pause();
+    this.hitBreakpoint = null;
     this.pc = 0;
     this.accu = 0;
     this.stack = 0;
@@ -452,6 +472,7 @@ export class CPUStore {
 
   stepSingle() {
     this.pause();
+    this.hitBreakpoint = null;
     const ok = this.step();
     if (settings.soundEnabled) {
       audio.playClick(1.0);
@@ -461,7 +482,12 @@ export class CPUStore {
 
   stepMulti(count = 10) {
     this.pause();
+    this.hitBreakpoint = null;
     for (let i = 0; i < count; i++) {
+      if (this.breakpoints.has(this.pc)) {
+        this.hitBreakpoint = this.pc;
+        break;
+      }
       if (!this.step()) break;
     }
     if (settings.soundEnabled) {
@@ -473,6 +499,15 @@ export class CPUStore {
     if (this.isRunning) return;
     this.isRunning = true;
     this.halted = false;
+    this.hitBreakpoint = null;
+
+    // Falls der PC bereits auf einem Breakpoint steht: Einzelschritt ausführen, um fortzusetzen
+    if (this.breakpoints.has(this.pc)) {
+      if (!this.step()) {
+        this.pause();
+        return;
+      }
+    }
 
     const loop = () => {
       if (!this.isRunning) return;
@@ -493,7 +528,17 @@ export class CPUStore {
       }
 
       for (let i = 0; i < stepsPerBatch; i++) {
+        if (this.breakpoints.has(this.pc)) {
+          this.hitBreakpoint = this.pc;
+          this.pause();
+          return;
+        }
         if (!this.step()) {
+          this.pause();
+          return;
+        }
+        if (this.breakpoints.has(this.pc)) {
+          this.hitBreakpoint = this.pc;
           this.pause();
           return;
         }

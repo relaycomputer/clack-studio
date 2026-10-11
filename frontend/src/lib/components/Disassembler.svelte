@@ -20,7 +20,8 @@
         addr: i,
         cmd: cmd,
         dis: dis,
-        isActive: (i === cpu.pc)
+        isActive: (i === cpu.pc),
+        isBreakpoint: cpu.breakpoints.has(i)
       });
 
       i += dis.words;
@@ -39,12 +40,28 @@
 
 <div class="tab-pane active" id="tab-disasm">
   <div class="disasm-toolbar">
-    <span>Live Disassembler des 1024-Wort Speichers</span>
-    <button class="btn-subtle" onclick={scrollToPC}>Zu aktivem PC springen</button>
+    <span>Live Disassembler &amp; Trace (Klick auf ● setzt Breakpoint)</span>
+    <div style="display: flex; gap: 8px;">
+      {#if cpu.breakpoints.size > 0}
+        <button class="btn-subtle" onclick={() => cpu.clearBreakpoints()} style="color: #f87171;">
+          ✕ {cpu.breakpoints.size} Breakpoints löschen
+        </button>
+      {/if}
+      <button class="btn-subtle" onclick={scrollToPC}>Zu aktivem PC springen</button>
+    </div>
   </div>
   <div class="disasm-container" bind:this={listContainer}>
     {#each rows as row (row.addr)}
-      <div class="disasm-row" class:active={row.isActive}>
+      <div 
+        class="disasm-row" 
+        class:active={row.isActive}
+        class:has-breakpoint={row.isBreakpoint}
+        onclick={() => cpu.toggleBreakpoint(row.addr)}
+        title="Klick: Breakpoint bei 0x{hex(row.addr, 3)} umschalten"
+      >
+        <span class="disasm-bp" class:active-bp={row.isBreakpoint}>
+          {row.isBreakpoint ? '●' : '○'}
+        </span>
         <span class="disasm-addr">{hex(row.addr, 3)}</span>
         <span class="disasm-hex">{hex(row.cmd, 4)}</span>
         <span class="disasm-code">{row.dis.text}</span>

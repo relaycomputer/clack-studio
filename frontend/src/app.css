@@ -701,6 +701,31 @@ html, body {
   flex-shrink: 0;
 }
 
+.badge-bp {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-bp.hit {
+  background: #b91c1c;
+  color: #fff;
+  border-color: #ef4444;
+  animation: pulse-bp 1s infinite alternate;
+}
+
+@keyframes pulse-bp {
+  from { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+  to { box-shadow: 0 0 12px rgba(239, 68, 68, 0.9); }
+}
+
 /* Workstation Tabs */
 .workstation-panel {
   background: var(--bg-panel);
@@ -980,10 +1005,35 @@ html, body {
 
 .disasm-row {
   display: grid;
-  grid-template-columns: 80px 90px 1fr 140px;
+  grid-template-columns: 28px 80px 90px 1fr 140px;
   padding: 4px 12px;
   border-bottom: 1px solid #131b26;
   align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.disasm-bp {
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.disasm-row:hover .disasm-bp {
+  color: #ef4444;
+  opacity: 0.6;
+}
+
+.disasm-bp.active-bp {
+  color: #ef4444 !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.8));
+}
+
+.disasm-row.has-breakpoint {
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .disasm-row:hover {
