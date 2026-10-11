@@ -1,0 +1,30 @@
+name: Clack-Studio CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Toolchain Info
+        run: |
+          echo "🚀 Running on Popel ARM64 Forgejo Runner"
+          go version
+          node -v
+          npm -v
+
+      - name: Install Frontend Dependencies & Build
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Compile Go Binary
+        run: |
+          go build -o clack-studio .
+          ls -lh clack-studio
