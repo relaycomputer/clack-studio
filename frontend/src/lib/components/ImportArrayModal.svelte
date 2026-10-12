@@ -275,7 +275,7 @@ const uint16_t program[] = {
 
 {#if isOpen}
   <div class="modal-backdrop" onclick={() => isOpen = false} role="presentation">
-    <div class="modal-dialog" onclick={(e) => e.stopPropagation()} role="dialog">
+    <div class="modal-dialog" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1">
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="modal-icon">📥</span>
@@ -286,7 +286,7 @@ const uint16_t program[] = {
             </p>
           </div>
         </div>
-        <button class="modal-close-btn" onclick={() => isOpen = false} title="Schließen">&times;</button>
+        <button class="modal-close-btn" onclick={() => isOpen = false} title="Schließen" aria-label="Schließen">&times;</button>
       </div>
 
       <div class="modal-body">

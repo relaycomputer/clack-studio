@@ -151,8 +151,8 @@
 </script>
 
 {#if isOpen}
-  <div class="modal-backdrop" onclick={() => !isFlashing && (isOpen = false)}>
-    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
+  <div class="modal-backdrop" onclick={() => !isFlashing && (isOpen = false)} role="presentation">
+    <div class="modal-content" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1">
       <div class="modal-header">
         <div class="modal-title">
           <span class="icon">🚀</span>

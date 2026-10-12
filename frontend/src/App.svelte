@@ -28,8 +28,10 @@
       <TransportControls />
 
       <div class="workstation-panel">
-        <div class="tabs-header">
+        <div class="tabs-header" role="tablist" aria-label="Arbeitsbereich-Tabs">
           <button 
+            role="tab"
+            aria-selected={settings.activeTab === 'tab-basic'}
             class="tab-btn" 
             class:active={settings.activeTab === 'tab-basic'}
             onclick={() => settings.setActiveTab('tab-basic')}
@@ -37,6 +39,8 @@
             📜 BASIC Studio
           </button>
           <button 
+            role="tab"
+            aria-selected={settings.activeTab === 'tab-asm'}
             class="tab-btn" 
             class:active={settings.activeTab === 'tab-asm'}
             onclick={() => settings.setActiveTab('tab-asm')}
@@ -44,6 +48,8 @@
             ⚡ Assembler Studio
           </button>
           <button 
+            role="tab"
+            aria-selected={settings.activeTab === 'tab-editor'}
             class="tab-btn" 
             class:active={settings.activeTab === 'tab-editor'}
             onclick={() => settings.setActiveTab('tab-editor')}
@@ -51,6 +57,8 @@
             💻 Maschinencode & Loader
           </button>
           <button 
+            role="tab"
+            aria-selected={settings.activeTab === 'tab-disasm'}
             class="tab-btn" 
             class:active={settings.activeTab === 'tab-disasm'}
             onclick={() => settings.setActiveTab('tab-disasm')}
@@ -58,6 +66,8 @@
             🔍 Disassembler & Trace
           </button>
           <button 
+            role="tab"
+            aria-selected={settings.activeTab === 'tab-memory'}
             class="tab-btn" 
             class:active={settings.activeTab === 'tab-memory'}
             onclick={() => settings.setActiveTab('tab-memory')}
@@ -65,6 +75,8 @@
             🧠 1024-Wort RAM Matrix
           </button>
           <button 
+            role="tab"
+            aria-selected={settings.activeTab === 'tab-history'}
             class="tab-btn" 
             class:active={settings.activeTab === 'tab-history'}
             onclick={() => settings.setActiveTab('tab-history')}

@@ -56,7 +56,11 @@
         class="disasm-row" 
         class:active={row.isActive}
         class:has-breakpoint={row.isBreakpoint}
+        role="button"
+        tabindex="0"
+        aria-label="Breakpoint bei Adresse 0x{hex(row.addr, 3)} umschalten. Status: {row.isBreakpoint ? 'Aktiv' : 'Inaktiv'}"
         onclick={() => cpu.toggleBreakpoint(row.addr)}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cpu.toggleBreakpoint(row.addr); } }}
         title="Klick: Breakpoint bei 0x{hex(row.addr, 3)} umschalten"
       >
         <span class="disasm-bp" class:active-bp={row.isBreakpoint}>
