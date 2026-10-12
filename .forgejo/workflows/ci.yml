@@ -34,12 +34,25 @@ jobs:
           go build -v -o bin/clack-studio .
           ls -lh bin/clack-studio
 
+      - name: Deploy Frontend to Live Webroot
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if [ -d "/deploy/studio" ]; then
+            echo "🚀 Deploying frontend/dist to live /deploy/studio..."
+            cp -r frontend/dist/* /deploy/studio/
+            chown -R 2000:2000 /deploy/studio
+            chmod -R 775 /deploy/studio
+            echo "✅ Live deployment to https://clack-studio.relaiscomputer.at/studio/ completed!"
+          else
+            echo "⚠️ /deploy/studio mount not found, skipping live webroot deployment"
+          fi
+
       - name: Send WhatsApp Notification on Success
         if: success()
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B | head -n 1)
           COMMIT_AUTHOR=$(git log -1 --pretty=%an)
-          MSG=$(printf "✅ *Clack-Studio CI Build Erfolgreich* (${{ github.repository }})\n• Branch: ${{ github.ref_name }}\n• Commit: %s\n• Autor: %s\n• Runner: Popel ARM64 (Forgejo CI)\n\nhttps://git.latentforge.dev/${{ github.repository }}/actions" "$COMMIT_MSG" "$COMMIT_AUTHOR")
+          MSG=$(printf "✅ *Clack-Studio CI/CD Erfolgreich* (${{ github.repository }})\n• Branch: ${{ github.ref_name }}\n• Commit: %s\n• Autor: %s\n• Live App: https://clack-studio.relaiscomputer.at/studio/\n• Runner: Forgejo CI/CD (Zunderschwamm)\n\nhttps://git.latentforge.dev/${{ github.repository }}/actions" "$COMMIT_MSG" "$COMMIT_AUTHOR")
           jq -n --arg to "120363411181500990@g.us" --arg text "$MSG" '{to: $to, text: $text}' | \
             curl -s -X POST http://100.64.0.3:3080/send -H "Content-Type: application/json" -d @- || true
 
