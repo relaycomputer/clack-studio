@@ -35,8 +35,8 @@
           <span class="label">ACCU</span>
           <span class="value" id="val-accu">0x0000 <small>(0)</small></span>
         </div>
-        <div class="metric-card">
-          <span class="label">STACK</span>
+        <div class="metric-card" title="SR (10-Bit Subroutine Return Address)">
+          <span class="label">SR</span>
           <span class="value" id="val-stack">0x0000</span>
         </div>
         <div class="metric-card">
@@ -199,10 +199,10 @@
               </div>
             </div>
 
-            <!-- STACK / SR Register (10 bit) -->
+            <!-- SR Register (10 bit Subroutine Return Address) -->
             <div class="led-bar-row">
-              <div class="led-label">
-                <span class="name">STACK (SR)</span>
+              <div class="led-label" title="SR (Subroutine Return Address): 10-Bit Hardware-Rücksprungadresse (CALL / RET)">
+                <span class="name">SR (Return)</span>
                 <span class="badge">10-Bit</span>
               </div>
               <div class="led-array" id="leds-stack"></div>

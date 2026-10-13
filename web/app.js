@@ -1194,7 +1194,9 @@ class ClackStudioApp {
           const word = currentWordAddr < MEM_SIZE ? this.cpu.memory[currentWordAddr] : 0;
 
           for (let bit = 15; bit >= 0; bit--) {
-            const x = (wordOffset * 16) + (15 - bit);
+            // Reale Hardware 32x32: Wort 0 (960) = rechte 16 Pixel (X:16..31), Wort 1 (961) = linke 16 Pixel (X:0..15)
+            const colWord = 1 - wordOffset;
+            const x = (colWord * 16) + (15 - bit);
             const isSet = (word >> bit) & 1;
 
             const cx = x * dotSize + dotSize / 2;

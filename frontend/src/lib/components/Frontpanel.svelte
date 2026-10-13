@@ -165,10 +165,10 @@
       </div>
     </div>
 
-    <!-- STACK (10 bit) -->
+    <!-- SR (10 bit Subroutine Return Address) -->
     <div class="led-bar-row">
-      <div class="led-label">
-        <span class="name">STACK (SR)</span>
+      <div class="led-label" title="SR (Subroutine Return Address): 10-Bit Hardware-Rücksprungadresse (CALL / RET)">
+        <span class="name">SR (Return)</span>
         <span class="badge">10-Bit</span>
       </div>
       <div class="led-array">

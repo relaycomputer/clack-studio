@@ -86,8 +86,8 @@
       <span class="label">ACCU</span>
       <span class="value">{hexAccu} <small>({signedAccu})</small></span>
     </div>
-    <div class="metric-card card-stack" title="Stack-Rücksprungadresse (CALL / RET)">
-      <span class="label">STACK</span>
+    <div class="metric-card card-stack" title="SR (10-Bit Subroutine Return Address / Rücksprungadresse)">
+      <span class="label">SR</span>
       <span class="value">{hexStack}</span>
     </div>
     <div class="metric-card card-instr" title="Ausgeführte Befehle">
