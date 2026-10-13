@@ -9,6 +9,7 @@
   import FlashModal from './FlashModal.svelte';
   import ImportArrayModal from './ImportArrayModal.svelte';
   import { ASM_PRESETS, ASM_PRESETS_LIST } from '../data/asmPresets.js';
+  import { isWasmAvailable, assembleCodeWasm, decompileCodeWasm } from '../services/wasmService.js';
 
   let editorContainer;
   let editorView;
@@ -196,6 +197,49 @@ LOOP:
     compileStatus.success = null;
     compileStatus.message = 'Assembliere...';
 
+    // 1. Vorlagen-Schnellprüfung
+    const activePreset = ASM_PRESETS_LIST.find(p => p.id === currentPreset);
+    if (activePreset && activePreset.compiledCode && activePreset.code.trim() === source.trim()) {
+      compileStatus.loading = false;
+      compileStatus.success = true;
+      compileStatus.message = `Vorlage '${activePreset.filename}' geladen. Bereit.`;
+      assembledArduinoCode = activePreset.compiledCode;
+      if (autoLoad) {
+        cpu.pause();
+        const count = cpu.loadSource(activePreset.compiledCode);
+        compileStatus.message = `Vorlage '${activePreset.filename}' geladen (${count} Worte). Drücke RUN!`;
+      }
+      return true;
+    }
+
+    // 2. In-Browser Assemblierung via WebAssembly
+    if (!settings.isStandalone && isWasmAvailable()) {
+      try {
+        const data = assembleCodeWasm(source);
+        compileStatus.loading = false;
+        if (data.success) {
+          compileStatus.success = true;
+          compileStatus.words = data.usedWords;
+          compileStatus.timeMs = data.durationMs;
+          compileStatus.message = `Erfolg (WASM): ${data.usedWords} Worte in ${data.durationMs.toFixed(2)} ms`;
+          assembledArduinoCode = data.arduinoCode;
+
+          if (autoLoad && (data.arduinoCode || data.carrayCode)) {
+            cpu.pause();
+            cpu.loadSource(data.arduinoCode || data.carrayCode);
+          }
+          return true;
+        } else {
+          compileStatus.success = false;
+          compileStatus.message = data.error || 'Fehler beim Assemblieren';
+          return false;
+        }
+      } catch (wasmErr) {
+        console.warn('WASM Assembler Fallback:', wasmErr);
+      }
+    }
+
+    // 3. Desktop Go-Backend API
     try {
       const resp = await fetch('/api/assemble', {
         method: 'POST',
@@ -205,7 +249,7 @@ LOOP:
       const ct = resp.headers.get('content-type') || '';
       if (!resp.ok || !ct.includes('application/json')) {
         const text = await resp.text();
-        throw new Error(ct.includes('text/html') ? 'Assembler-Service nur in der lokalen Desktop-App aktiv' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+        throw new Error(ct.includes('text/html') ? 'Assembler-Service nur in der lokalen Desktop-App oder via WebAssembly aktiv' : (text.slice(0, 100) || `HTTP ${resp.status}`));
       }
       const data = await resp.json();
 
@@ -216,9 +260,9 @@ LOOP:
         compileStatus.message = `Erfolg: ${data.usedWords} Worte in ${data.durationMs.toFixed(2)} ms`;
         assembledArduinoCode = data.arduinoCode;
 
-        if (autoLoad && data.carrayCode) {
-          cpu.loadProgram(data.carrayCode);
-          cpu.reset();
+        if (autoLoad && (data.arduinoCode || data.carrayCode)) {
+          cpu.pause();
+          cpu.loadSource(data.arduinoCode || data.carrayCode);
         }
         return true;
       } else {
@@ -241,6 +285,23 @@ LOOP:
     decompileStatus.loading = true;
     decompileStatus.message = 'Dekompiliere nach Clack-BASIC...';
 
+    // 1. WebAssembly Decompiler
+    if (!settings.isStandalone && isWasmAvailable()) {
+      try {
+        const data = decompileCodeWasm(source);
+        decompileStatus.loading = false;
+        if (data.success && data.basicCode) {
+          settings.switchToBasic(data.basicCode);
+          return;
+        } else if (data.error) {
+          alert('Dekompilier-Fehler:\n' + data.error);
+          return;
+        }
+      } catch (wasmErr) {
+        console.warn('WASM Decompiler Fallback:', wasmErr);
+      }
+    }
+
     try {
       const resp = await fetch('/api/decompile', {
         method: 'POST',
@@ -250,7 +311,7 @@ LOOP:
       const ct = resp.headers.get('content-type') || '';
       if (!resp.ok || !ct.includes('application/json')) {
         const text = await resp.text();
-        throw new Error(ct.includes('text/html') ? 'Im Web-Modus nicht verfügbar' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+        throw new Error(ct.includes('text/html') ? 'Im Web-Modus via WebAssembly oder lokal' : (text.slice(0, 100) || `HTTP ${resp.status}`));
       }
       const data = await resp.json();
 

@@ -238,6 +238,10 @@ export class CPUStore {
     return count;
   }
 
+  loadProgram(text) {
+    return this.loadSource(text);
+  }
+
   step() {
     if (this.halted) return false;
 
@@ -440,7 +444,11 @@ export class CPUStore {
         break;
 
       default:
-        this.halt(`Halt / Unbekannter Opcode 0x${(cmd || 0).toString(16).toUpperCase().padStart(4, '0')} bei PC 0x${currentPC.toString(16).toUpperCase().padStart(3, '0')}`);
+        if (cmd === 0 && this.instructions === 1) {
+          this.halt("Speicher ist leer (Opcode 0x0000 bei PC 0x000). Bitte zuerst ein Programm kompilieren oder laden.");
+        } else {
+          this.halt(`Halt / Unbekannter Opcode 0x${(cmd || 0).toString(16).toUpperCase().padStart(4, '0')} bei PC 0x${currentPC.toString(16).toUpperCase().padStart(3, '0')}`);
+        }
         return false;
     }
 
@@ -497,6 +505,13 @@ export class CPUStore {
 
   run() {
     if (this.isRunning) return;
+
+    // Speicherleerlauf-Prüfung: Falls PC auf 0 steht und RAM dort 0x0000 ist
+    if (this.instructions === 0 && this.pc === 0 && this.memory[0] === 0) {
+      this.halt("Speicher ist leer (Opcode 0x0000 bei PC 0x000). Bitte zuerst ein Programm kompilieren oder laden.");
+      return;
+    }
+
     this.isRunning = true;
     this.halted = false;
     this.hitBreakpoint = null;

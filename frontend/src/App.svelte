@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import HeaderBar from './lib/components/HeaderBar.svelte';
   import MatrixDisplay from './lib/components/MatrixDisplay.svelte';
   import Frontpanel from './lib/components/Frontpanel.svelte';
@@ -10,7 +11,23 @@
   import RamHeatmap from './lib/components/RamHeatmap.svelte';
   import LogicAnalyzer from './lib/components/LogicAnalyzer.svelte';
 
+  import { cpu } from './lib/stores/cpuStore.svelte.js';
   import { settings } from './lib/stores/settingsStore.svelte.js';
+  import { BASIC_PRESETS_LIST } from './lib/data/basicPresets.js';
+  import { initClackWasm } from './lib/services/wasmService.js';
+
+  onMount(() => {
+    // 1. WebAssembly Compiler im Hintergrund initialisieren
+    initClackWasm();
+
+    // 2. Initialen Maschinencode laden (Ping-Pong aus Standard-BASIC-Preset)
+    if (cpu.instructions === 0 && cpu.cycles === 0 && cpu.memory[0] === 0) {
+      const defaultPreset = BASIC_PRESETS_LIST.find(p => p.id === 'ping_pong') || BASIC_PRESETS_LIST[0];
+      if (defaultPreset && defaultPreset.compiledCode) {
+        cpu.loadSource(defaultPreset.compiledCode);
+      }
+    }
+  });
 </script>
 
 <div class="chassis">

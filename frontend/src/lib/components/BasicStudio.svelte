@@ -8,6 +8,7 @@
   import FlashModal from './FlashModal.svelte';
   import ImportArrayModal from './ImportArrayModal.svelte';
   import { BASIC_PRESETS, BASIC_PRESETS_LIST } from '../data/basicPresets.js';
+  import { isWasmAvailable, compileBasicWasm, decompileCodeWasm } from '../services/wasmService.js';
 
   let editorContainer = $state(null);
   let editorView = $state(null);
@@ -104,6 +105,22 @@ HALT
       if (typeof content === 'string' && editorView) {
         const isArrayFile = content.includes('daten[') || content.includes('{') || file.name.endsWith('.txt') || file.name.endsWith('.ino') || file.name.endsWith('.c') || file.name.endsWith('.asm');
         if (isArrayFile && !file.name.endsWith('.bas')) {
+          if (isWasmAvailable()) {
+            try {
+              const data = decompileCodeWasm(content);
+              if (data.success && data.basicCode) {
+                editorView.dispatch({
+                  changes: { from: 0, to: editorView.state.doc.length, insert: data.basicCode }
+                });
+                currentFileName = file.name.replace(/\.[^/.]+$/, "") + ".bas";
+                selectedPreset = '';
+                statusType = 'success';
+                statusMessage = `🔄 '${file.name}' via WebAssembly nach BASIC dekompiliert!`;
+                compileBasic(true);
+                return;
+              }
+            } catch (_) {}
+          }
           try {
             const resp = await fetch('/api/decompile', {
               method: 'POST',
@@ -192,6 +209,53 @@ HALT
     statusType = '';
     statusMessage = 'Kompiliere BASIC-Code mit Clack-BASIC...';
 
+    // 1. Vorlagen-Schnellprüfung: Falls unveränderte Vorlage mit beiliegender Maschinencode-Version vorliegt
+    const activePreset = BASIC_PRESETS_LIST.find(p => p.id === selectedPreset);
+    if (activePreset && activePreset.compiledCode && activePreset.code.trim() === source.trim()) {
+      listingContent = activePreset.compiledCode;
+      showListing = true;
+      if (loadIntoSim) {
+        cpu.pause();
+        const count = cpu.loadSource(activePreset.compiledCode);
+        statusType = 'success';
+        statusMessage = `✅ Vorlage '${activePreset.filename}' geladen (${count} Worte). Drücke RUN!`;
+      } else {
+        statusType = 'success';
+        statusMessage = `✅ Vorlage '${activePreset.filename}' bereit.`;
+      }
+      return;
+    }
+
+    // 2. In-Browser Kompilierung via WebAssembly (falls im Web-Modus oder Server offline)
+    if (!settings.isStandalone && isWasmAvailable()) {
+      try {
+        const data = compileBasicWasm(source, 'arduino');
+        if (!data.success) {
+          statusType = 'error';
+          statusMessage = `❌ ${data.error}`;
+          return;
+        }
+
+        listingContent = data.listing || data.code;
+        showListing = true;
+        const pct = ((data.usedWords / data.totalWords) * 100).toFixed(1);
+
+        if (loadIntoSim) {
+          cpu.pause();
+          const count = cpu.loadSource(data.arduinoCode);
+          statusType = 'success';
+          statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms (WebAssembly) kompiliert & geladen (${count} Worte, ${pct}%). Drücke RUN!`;
+        } else {
+          statusType = 'success';
+          statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms (WebAssembly) erfolgreich kompiliert! Speicher: ${data.usedWords} / ${data.totalWords} Worte (${pct}%).`;
+        }
+        return;
+      } catch (wasmErr) {
+        console.warn('WASM Kompilierung Fallback:', wasmErr);
+      }
+    }
+
+    // 3. Desktop Go-Backend API (/api/compile or /api/compile-and-load)
     const endpoint = loadIntoSim ? '/api/compile-and-load' : '/api/compile';
 
     try {
@@ -204,7 +268,7 @@ HALT
       const ct = resp.headers.get('content-type') || '';
       if (!resp.ok || !ct.includes('application/json')) {
         const text = await resp.text();
-        throw new Error(ct.includes('text/html') ? 'Der Compiler-Service ist nur in der lokalen Desktop-App aktiv' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+        throw new Error(ct.includes('text/html') ? 'Der Compiler-Service ist nur in der lokalen Desktop-App oder via WebAssembly aktiv' : (text.slice(0, 100) || `HTTP ${resp.status}`));
       }
 
       const data = await resp.json();
@@ -238,6 +302,30 @@ HALT
   async function exportCode(format) {
     if (!editorView) return;
     const source = editorView.state.doc.toString();
+
+    // Web-Modus via WebAssembly
+    if (!settings.isStandalone && isWasmAvailable()) {
+      try {
+        const data = compileBasicWasm(source, format);
+        if (!data.success) {
+          alert('Kompilierfehler:\n' + data.error);
+          return;
+        }
+        const ext = format === 'c-array' ? 'c' : 'txt';
+        const filename = `clack_compiled.${ext}`;
+        const blob = new Blob([data.code || data.arduinoCode], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        return;
+      } catch (err) {
+        console.warn('WASM Export Fallback:', err);
+      }
+    }
+
     try {
       const resp = await fetch('/api/compile', {
         method: 'POST',
@@ -247,7 +335,7 @@ HALT
       const ct = resp.headers.get('content-type') || '';
       if (!resp.ok || !ct.includes('application/json')) {
         const text = await resp.text();
-        throw new Error(ct.includes('text/html') ? 'Export erfordert die lokale Desktop-App' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+        throw new Error(ct.includes('text/html') ? 'Export erfordert die lokale Desktop-App oder WebAssembly' : (text.slice(0, 100) || `HTTP ${resp.status}`));
       }
       const data = await resp.json();
       if (!data.success) {

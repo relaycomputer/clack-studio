@@ -105,5 +105,15 @@
         🔴 {cpu.breakpoints.size} BP
       </span>
     {/if}
+
+    {#if cpu.halted}
+      <span class="badge-halt" title={cpu.haltReason}>
+        🛑 {cpu.haltReason}
+      </span>
+    {:else if cpu.instructions === 0 && cpu.memory[cpu.pc] === 0}
+      <span class="badge-empty-ram" title="Speicher ist noch leer. Wähle ein Preset oder lade ein Programm.">
+        💡 Kein Programm im RAM
+      </span>
+    {/if}
   </div>
 </div>
