@@ -1,5 +1,6 @@
 <script>
   import { cpu } from '../stores/cpuStore.svelte.js';
+  import { settings } from '../stores/settingsStore.svelte.js';
   import FlashModal from './FlashModal.svelte';
   import ImportArrayModal from './ImportArrayModal.svelte';
   import { PRESETS, PRESETS_LIST } from '../data/machinePresets.js';
@@ -11,6 +12,14 @@
   let statusMessage = $state("Unterstützt 'daten[n] = ...', C-Array Block '{ 0x... }', Arduino .ino und Loader ('0 0x4000' / 'CLR').");
   let showImportModal = $state(false);
   let showFlashModal = $state(false);
+
+  function openFlashModal() {
+    if (!settings.isStandalone) {
+      alert('Das direkte USB-Flashen auf den Arduino Mega ist nur in der lokalen Desktop-Applikation von Clack-Studio möglich.\n\nIm Web-Browser steht kein direkter serieller Hardware-Zugriff zur Verfügung.');
+      return;
+    }
+    showFlashModal = true;
+  }
 
   function loadPreset(key) {
     selectedPreset = key;
@@ -232,7 +241,12 @@ daten[0] = 0xF000; // NOP
     </div>
 
     <div class="editor-actions">
-      <button class="btn btn-warning" onclick={() => showFlashModal = true} title="Maschinencode direkt auf Arduino Mega flashen">
+      <button 
+        class="btn btn-warning" 
+        disabled={!settings.isStandalone}
+        onclick={openFlashModal} 
+        title={settings.isStandalone ? "Maschinencode direkt auf Arduino Mega flashen" : "Hardware-Flashen ist nur in der lokalen Desktop-App verfügbar (im Web-Browser ohne USB-Hardware-Anbindung deaktiviert)"}
+      >
         🚀 Auf Arduino flashen
       </button>
       <button class="btn btn-primary" onclick={loadCode} title="Maschinencode in RAM laden & CPU resetten">

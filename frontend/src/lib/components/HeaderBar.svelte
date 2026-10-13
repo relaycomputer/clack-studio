@@ -33,23 +33,29 @@
     try {
       const res = await fetch('/api/info');
       if (res.ok) {
-        const info = await res.json();
-        if (info.standalone) {
-          isStandalone = true;
-          // Initialer Keepalive
-          fetch('/api/keepalive', { method: 'POST' }).catch(() => {});
-          // Zyklischer Heartbeat alle 3 Sekunden
-          keepaliveTimer = setInterval(() => {
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const info = await res.json();
+          if (info.standalone) {
+            isStandalone = true;
+            settings.isStandalone = true;
+            // Initialer Keepalive
             fetch('/api/keepalive', { method: 'POST' }).catch(() => {});
-          }, 3000);
+            // Zyklischer Heartbeat alle 3 Sekunden
+            keepaliveTimer = setInterval(() => {
+              fetch('/api/keepalive', { method: 'POST' }).catch(() => {});
+            }, 3000);
 
-          window.addEventListener('beforeunload', () => {
-            navigator.sendBeacon('/api/leave');
-          });
+            window.addEventListener('beforeunload', () => {
+              navigator.sendBeacon('/api/leave');
+            });
+            return;
+          }
         }
       }
     } catch (e) {
       isStandalone = false;
+      settings.isStandalone = false;
     }
   });
 

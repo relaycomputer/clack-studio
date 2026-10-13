@@ -13,6 +13,7 @@ export class SettingsStore {
   activeTab = $state('tab-basic');
   sharedAsmCode = $state('');
   sharedBasicCode = $state('');
+  isStandalone = $state(false);
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -23,7 +24,31 @@ export class SettingsStore {
       else if (t === 'disasm') this.activeTab = 'tab-disasm';
       else if (t === 'memory') this.activeTab = 'tab-memory';
       else if (t === 'history') this.activeTab = 'tab-history';
+      
+      this.checkEnvironment();
     }
+  }
+
+  async checkEnvironment() {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch('/api/info', { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const info = await res.json();
+          if (info.standalone) {
+            this.isStandalone = true;
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      // In web edition, /api/info fails or times out
+    }
+    this.isStandalone = false;
   }
 
   setTheme(newTheme) {

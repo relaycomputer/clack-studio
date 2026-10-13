@@ -17,6 +17,11 @@
     isLoadingPorts = true;
     try {
       const resp = await fetch('/api/ports');
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Ports können nur in der lokalen Desktop-App abgefragt werden' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
       const data = await resp.json();
       if (data.success && data.ports) {
         ports = data.ports;
@@ -66,6 +71,12 @@
           source: codeToFlash
         })
       });
+
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Server-Flasher ist im Web nicht verfügbar' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
 
       progressPct = 80;
       const data = await resp.json();

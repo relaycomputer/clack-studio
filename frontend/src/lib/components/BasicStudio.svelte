@@ -201,6 +201,12 @@ HALT
         body: JSON.stringify({ source: source, format: 'arduino' })
       });
 
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Der Compiler-Service ist nur in der lokalen Desktop-App aktiv' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
+
       const data = await resp.json();
 
       if (!data.success) {
@@ -238,6 +244,11 @@ HALT
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source: source, format: format })
       });
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Export erfordert die lokale Desktop-App' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
       const data = await resp.json();
       if (!data.success) {
         alert('Kompilierfehler:\n' + data.error);
@@ -262,6 +273,10 @@ HALT
   let flashCode = $state('');
 
   async function openFlashModal() {
+    if (!settings.isStandalone) {
+      alert('Das direkte USB-Flashen auf den Arduino Mega ist nur in der lokalen Desktop-Applikation von Clack-Studio möglich.\n\nIm Web-Browser steht kein direkter serieller Hardware-Zugriff zur Verfügung.');
+      return;
+    }
     if (!editorView) return;
     const source = editorView.state.doc.toString();
     if (!source.trim()) {
@@ -275,6 +290,11 @@ HALT
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source: source, format: 'arduino' })
       });
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Compiler-Endpunkt im Web nicht verfügbar' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
       const data = await resp.json();
       if (!data.success) {
         alert('Kompilierfehler vor dem Flashen:\n' + data.error);
@@ -301,6 +321,11 @@ HALT
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source: source, format: 'listing' })
       });
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Im Web-Modus nicht verfügbar' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
       const data = await resp.json();
       if (!data.success) {
         alert('Kompilierfehler:\n' + data.error);
@@ -399,7 +424,12 @@ HALT
     </div>
 
     <div class="editor-actions">
-      <button class="btn btn-warning" onclick={openFlashModal} title="Kompiliert und öffnet den Arduino Mega USB-Flasher">
+      <button 
+        class="btn btn-warning" 
+        disabled={!settings.isStandalone}
+        onclick={openFlashModal} 
+        title={settings.isStandalone ? "Kompiliert und öffnet den Arduino Mega USB-Flasher" : "Hardware-Flashen ist nur in der lokalen Desktop-App verfügbar (im Web-Browser ohne USB-Hardware-Anbindung deaktiviert)"}
+      >
         🚀 Auf Arduino flashen
       </button>
       <button class="btn btn-primary" onclick={() => compileBasic(true)} title="Kompiliert BASIC und lädt den Maschinencode sofort in den Simulator">

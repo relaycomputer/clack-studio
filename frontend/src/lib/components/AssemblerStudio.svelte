@@ -202,6 +202,11 @@ LOOP:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source })
       });
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Assembler-Service nur in der lokalen Desktop-App aktiv' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
       const data = await resp.json();
 
       if (data.success) {
@@ -242,6 +247,11 @@ LOOP:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source })
       });
+      const ct = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ct.includes('application/json')) {
+        const text = await resp.text();
+        throw new Error(ct.includes('text/html') ? 'Im Web-Modus nicht verfügbar' : (text.slice(0, 100) || `HTTP ${resp.status}`));
+      }
       const data = await resp.json();
 
       if (data.success && data.basicCode) {
@@ -258,6 +268,10 @@ LOOP:
   }
 
   async function openFlashDialog() {
+    if (!settings.isStandalone) {
+      alert('Das direkte USB-Flashen auf den Arduino Mega ist nur in der lokalen Desktop-Applikation von Clack-Studio möglich.\n\nIm Web-Browser steht kein direkter serieller Hardware-Zugriff zur Verfügung.');
+      return;
+    }
     const ok = await assembleCode(false);
     if (ok) {
       isFlashModalOpen = true;
@@ -362,7 +376,9 @@ LOOP:
 
       <button 
         class="action-btn flash-btn"
+        disabled={!settings.isStandalone}
         onclick={openFlashDialog}
+        title={settings.isStandalone ? "Maschinencode direkt auf Arduino Mega flashen" : "Hardware-Flashen ist nur in der lokalen Desktop-App verfügbar (im Web-Browser ohne USB-Hardware-Anbindung deaktiviert)"}
       >
         🚀 Auf Arduino flashen
       </button>
