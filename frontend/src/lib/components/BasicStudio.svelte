@@ -50,6 +50,14 @@
       currentFileName = found.filename;
       statusType = '';
       statusMessage = `BASIC-Vorlage '${found.filename}' geladen. Bereit zum Kompilieren.`;
+
+      if (key === 'mandelbrot_64x64') {
+        settings.setMatrixResolution(64);
+        settings.setMatrixColorMode('mandelbrot');
+      } else if (key === 'mandelbrot_32x32') {
+        settings.setMatrixResolution(32);
+        settings.setMatrixColorMode('mandelbrot');
+      }
     }
   }
 
