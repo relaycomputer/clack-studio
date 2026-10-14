@@ -9,6 +9,7 @@
   import ImportArrayModal from './ImportArrayModal.svelte';
   import { BASIC_PRESETS, BASIC_PRESETS_LIST } from '../data/basicPresets.js';
   import { isWasmAvailable, compileBasicWasm, decompileCodeWasm } from '../services/wasmService.js';
+  import QueueStatusBadge from './QueueStatusBadge.svelte';
 
   let editorContainer = $state(null);
   let editorView = $state(null);
@@ -20,6 +21,9 @@
   let statusType = $state('');
   let showListing = $state(false);
   let listingContent = $state('');
+  let isCompiling = $state(false);
+  let lastDurationMs = $state(null);
+  let lastQueueWaitMs = $state(null);
 
   function initEditor() {
     if (!editorContainer || editorView) return;
@@ -266,76 +270,90 @@ HALT
       return;
     }
 
-    // 2. In-Browser Kompilierung via WebAssembly (falls im Web-Modus oder Server offline)
-    if (!settings.isStandalone && isWasmAvailable()) {
+    isCompiling = true;
+    try {
+      // 2. Desktop/Online Go-Backend API mit Worker-Queue (/api/compile or /api/compile-and-load)
+      const endpoint = loadIntoSim ? '/api/compile-and-load' : '/api/compile';
+
       try {
-        const data = compileBasicWasm(source, 'arduino');
-        if (!data.success) {
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: source, format: 'arduino' })
+        });
+
+        const ct = resp.headers.get('content-type') || '';
+        if (resp.ok && ct.includes('application/json')) {
+          const data = await resp.json();
+
+          if (!data.success) {
+            statusType = 'error';
+            statusMessage = `❌ ${data.error}`;
+            return;
+          }
+
+          listingContent = data.listing || data.code;
+          showListing = true;
+          lastDurationMs = data.durationMs;
+          lastQueueWaitMs = data.queueWaitMs;
+
+          const pct = ((data.usedWords / data.totalWords) * 100).toFixed(1);
+          const queueInfo = data.queueWaitMs > 0 ? ` (Warteschlange: ${data.queueWaitMs.toFixed(0)} ms)` : '';
+
+          if (loadIntoSim) {
+            cpu.pause();
+            const count = cpu.loadSource(data.arduinoCode);
+            statusType = 'success';
+            statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms${queueInfo} kompiliert & geladen (${count} Worte, ${pct}%). Drücke RUN!`;
+          } else {
+            statusType = 'success';
+            statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms${queueInfo} erfolgreich kompiliert! Speicher: ${data.usedWords} / ${data.totalWords} Worte (${pct}%).`;
+          }
+          return;
+        } else if (resp.status === 429) {
           statusType = 'error';
-          statusMessage = `❌ ${data.error}`;
+          statusMessage = '⏳ Compiler-Warteschlange ist ausgelastet. Bitte versuche es in wenigen Augenblicken erneut.';
           return;
         }
+      } catch (backendErr) {
+        // Backend not reached, fall back to WASM below
+      }
 
-        listingContent = data.listing || data.code;
-        showListing = true;
-        const pct = ((data.usedWords / data.totalWords) * 100).toFixed(1);
+      // 3. Fallback: In-Browser Kompilierung via WebAssembly
+      if (isWasmAvailable()) {
+        try {
+          const data = compileBasicWasm(source, 'arduino');
+          if (!data.success) {
+            statusType = 'error';
+            statusMessage = `❌ ${data.error}`;
+            return;
+          }
 
-        if (loadIntoSim) {
-          cpu.pause();
-          const count = cpu.loadSource(data.arduinoCode);
-          statusType = 'success';
-          statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms (WebAssembly) kompiliert & geladen (${count} Worte, ${pct}%). Drücke RUN!`;
-        } else {
-          statusType = 'success';
-          statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms (WebAssembly) erfolgreich kompiliert! Speicher: ${data.usedWords} / ${data.totalWords} Worte (${pct}%).`;
+          listingContent = data.listing || data.code;
+          showListing = true;
+          lastDurationMs = data.durationMs;
+          lastQueueWaitMs = 0;
+          const pct = ((data.usedWords / data.totalWords) * 100).toFixed(1);
+
+          if (loadIntoSim) {
+            cpu.pause();
+            const count = cpu.loadSource(data.arduinoCode);
+            statusType = 'success';
+            statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms (WebAssembly) kompiliert & geladen (${count} Worte, ${pct}%). Drücke RUN!`;
+          } else {
+            statusType = 'success';
+            statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms (WebAssembly) erfolgreich kompiliert! Speicher: ${data.usedWords} / ${data.totalWords} Worte (${pct}%).`;
+          }
+          return;
+        } catch (wasmErr) {
+          console.warn('WASM Kompilierung Fallback:', wasmErr);
         }
-        return;
-      } catch (wasmErr) {
-        console.warn('WASM Kompilierung Fallback:', wasmErr);
-      }
-    }
-
-    // 3. Desktop Go-Backend API (/api/compile or /api/compile-and-load)
-    const endpoint = loadIntoSim ? '/api/compile-and-load' : '/api/compile';
-
-    try {
-      const resp = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: source, format: 'arduino' })
-      });
-
-      const ct = resp.headers.get('content-type') || '';
-      if (!resp.ok || !ct.includes('application/json')) {
-        const text = await resp.text();
-        throw new Error(ct.includes('text/html') ? 'Der Compiler-Service ist nur in der lokalen Desktop-App oder via WebAssembly aktiv' : (text.slice(0, 100) || `HTTP ${resp.status}`));
       }
 
-      const data = await resp.json();
-
-      if (!data.success) {
-        statusType = 'error';
-        statusMessage = `❌ ${data.error}`;
-        return;
-      }
-
-      listingContent = data.listing || data.code;
-      showListing = true;
-
-      const pct = ((data.usedWords / data.totalWords) * 100).toFixed(1);
-
-      if (loadIntoSim) {
-        cpu.pause();
-        const count = cpu.loadSource(data.arduinoCode);
-        statusType = 'success';
-        statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms kompiliert & geladen (${count} Worte, ${pct}%). Drücke RUN!`;
-      } else {
-        statusType = 'success';
-        statusMessage = `✅ In ${data.durationMs.toFixed(2)} ms erfolgreich kompiliert! Speicher: ${data.usedWords} / ${data.totalWords} Worte (${pct}%).`;
-      }
-    } catch (err) {
       statusType = 'error';
-      statusMessage = `❌ Verbindungsfehler zum Compiler: ${err.message}`;
+      statusMessage = '❌ Verbindungsfehler zum Compiler-Dienst und WebAssembly nicht verfügbar.';
+    } finally {
+      isCompiling = false;
     }
   }
 
@@ -552,6 +570,7 @@ HALT
     </div>
 
     <div class="editor-actions">
+      <QueueStatusBadge {isCompiling} {lastDurationMs} {lastQueueWaitMs} />
       <button 
         class="btn btn-warning" 
         disabled={!settings.isStandalone}
