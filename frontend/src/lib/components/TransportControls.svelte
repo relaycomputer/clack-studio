@@ -91,9 +91,12 @@
       value={currentStep}
       oninput={handleSliderChange}
     />
-    <span class="speed-val">{SPEED_PRESETS[currentStep].label}</span>
+    <span class="speed-val">
+      <span class="speed-val-full">{SPEED_PRESETS[currentStep].label}</span>
+      <span class="speed-val-short">{SPEED_PRESETS[currentStep].shortLabel}</span>
+    </span>
     <span class="hardware-time-badge" title="Original Hardware-Laufzeit auf 14.3 Hz Relaisrechner (70 ms pro Hardware-Takt)">
-      ⚙️ Relais-Laufzeit: {hardwareTimeFormatted} <small>({cpu.instructions} Befehle / {cpu.cycles} Takte)</small>
+      <span class="hw-icon">⚙️</span> <span class="hw-title">Relais-Laufzeit:</span> <strong>{hardwareTimeFormatted}</strong> <span class="hw-details"><small>({cpu.instructions} Befehle / {cpu.cycles} Takte)</small></span>
     </span>
 
     {#if cpu.hitBreakpoint !== null}

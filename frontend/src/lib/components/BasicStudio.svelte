@@ -233,6 +233,15 @@ HALT
     statusType = '';
     statusMessage = 'Kompiliere BASIC-Code mit Clack-BASIC...';
 
+    // Auto-Konfiguration Displayauflösung anhand SCREEN 64
+    if (source.includes('SCREEN 64')) {
+      settings.setMatrixResolution(64);
+      settings.setMatrixColorMode('mandelbrot');
+      settings.setMatrixMode('1bit');
+    } else {
+      settings.setMatrixResolution(32);
+    }
+
     // 1. Vorlagen-Schnellprüfung: Falls unveränderte Vorlage mit beiliegender Maschinencode-Version vorliegt
     const activePreset = BASIC_PRESETS_LIST.find(p => p.id === selectedPreset);
     if (activePreset && activePreset.compiledCode && activePreset.code.trim() === source.trim()) {

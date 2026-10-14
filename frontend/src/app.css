@@ -336,6 +336,40 @@ html, body {
 }
 
 @media (max-width: 1024px) {
+  .transport-bar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 8px 12px;
+  }
+
+  .speed-control {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .speed-val {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .speed-val-full {
+    display: none;
+  }
+
+  .speed-val-short {
+    display: inline;
+  }
+
+  .hardware-time-badge {
+    font-size: 10.5px;
+    padding: 2px 6px;
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
   .main-grid {
     grid-template-columns: 1fr;
     height: auto;
@@ -412,6 +446,12 @@ html, body {
     min-height: 38px;
     padding: 8px 14px;
     touch-action: manipulation;
+  }
+}
+
+@media (max-width: 768px) {
+  .hw-details {
+    display: none;
   }
 }
 
@@ -800,7 +840,9 @@ html, body {
   gap: 10px;
   font-size: 12px;
   color: var(--text-muted);
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .speed-control label {
@@ -821,12 +863,20 @@ html, body {
   font-weight: 700;
   color: var(--text-bright);
   width: 220px;
-  min-width: 220px;
+  min-width: 0;
   max-width: 220px;
   text-align: left;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
+  flex-shrink: 1;
+}
+
+.speed-val-short {
+  display: none;
+}
+
+.speed-val-full {
+  display: inline;
 }
 
 .hardware-time-badge {
@@ -840,7 +890,8 @@ html, body {
   border-radius: 6px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  max-width: 100%;
 }
 
 .badge-bp {

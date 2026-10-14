@@ -39,8 +39,8 @@ LET DA = 892
 LET DAS = 896
 
 REM Y von 31 abwaerts bis 0.
-REM CY = -1 bei Y=31, wird pro Zeile um 3 kleiner (-1, -4, -7, ... bis -94)
-LET CY = -1
+REM CY = 0 bei Y=31, wird pro Zeile um 3 groesser (0, 3, 6, ... bis 93)
+LET CY = 0
 LET Y = 31
 
 Y_LOOP:
@@ -48,8 +48,8 @@ IF Y < 0 THEN
     GOTO DONE
 END IF
 
-REM X von -135 bis +54 bei Scale 64 (entspricht Re: -2.11 .. +0.84)
-LET CX = -135
+REM X von -144 bis +45 bei Scale 64 (entspricht Re: -2.25 .. +0.70)
+LET CX = -144
 LET X = 0
 LET ROW = 0
 LET PA = DA
@@ -133,7 +133,7 @@ GOTO X_LOOP
 
 NEXT_Y:
 LET Y = Y - 1
-LET CY = CY - 3
+LET CY = CY + 3
 LET DA = DA - 4
 LET DAS = DAS + 4
 GOTO Y_LOOP

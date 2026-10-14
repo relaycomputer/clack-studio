@@ -50,6 +50,8 @@ export class CPUStore {
   halted = $state(false);
   haltReason = $state('');
   lastWriteAddr = $state(-1);
+  displayWrites = 0;
+  frameCompleted = false;
 
   // 1024-Word RAM array (Uint16Array wrapped in $state)
   memory = $state(new Uint16Array(MEM_SIZE));
@@ -127,6 +129,8 @@ export class CPUStore {
     this.halted = false;
     this.haltReason = '';
     this.lastWriteAddr = -1;
+    this.displayWrites = 0;
+    this.frameCompleted = false;
     this.history = [];
   }
 
@@ -258,29 +262,32 @@ export class CPUStore {
     this.write = 0;
     this.lastWriteAddr = -1;
 
-    const trace = {
-      idx: this.instructions,
-      pc: currentPC,
-      cmd: cmd,
-      mnemonic: '',
-      accu: this.accu,
-      addr: 0,
-      data: 0,
-      read: 0,
-      write: 0,
-      carry: this.carry,
-      stack: this.stack,
-      stepCycles: stepCycles,
-      cycles: this.cycles
-    };
+    const needTrace = this.history.length < 5000 && settings.activeTab === 'tab-history';
+    let trace = null;
 
     const nextWord = () => {
       this.pc = (this.pc + 1) % MEM_SIZE;
       return this.memory[this.pc];
     };
 
-    const disasm = this.disassembleInstruction(cmd, this.memory[(this.pc + 1) % MEM_SIZE]);
-    trace.mnemonic = disasm.text;
+    if (needTrace) {
+      const disasm = this.disassembleInstruction(cmd, this.memory[(this.pc + 1) % MEM_SIZE]);
+      trace = {
+        idx: this.instructions,
+        pc: currentPC,
+        cmd: cmd,
+        mnemonic: disasm.text,
+        accu: this.accu,
+        addr: 0,
+        data: 0,
+        read: 0,
+        write: 0,
+        carry: this.carry,
+        stack: this.stack,
+        stepCycles: stepCycles,
+        cycles: this.cycles
+      };
+    }
 
     switch (cmd) {
       case OP.NOP:
@@ -327,6 +334,7 @@ export class CPUStore {
         this.dataBus = this.accu;
         this.write = this.accu;
         this.lastWriteAddr = addr;
+        if (addr >= 768 && addr < 1024) this.displayWrites++;
         this.pc = (this.pc + 1) % MEM_SIZE;
         break;
       }
@@ -339,6 +347,7 @@ export class CPUStore {
         this.dataBus = this.accu;
         this.write = this.accu;
         this.lastWriteAddr = targetAddr;
+        if (targetAddr >= 768 && targetAddr < 1024) this.displayWrites++;
         this.pc = (this.pc + 1) % MEM_SIZE;
         break;
       }
@@ -401,35 +410,46 @@ export class CPUStore {
           this.halt("Endlosschleife (BA auf sich selbst)");
           return false;
         }
+        if (target < currentPC && this.displayWrites >= 16) {
+          this.frameCompleted = true;
+        }
         this.pc = target;
         break;
       }
 
       case OP.BC: {
         const target = nextWord() % MEM_SIZE;
-        if (this.carry === 1) this.pc = target;
-        else this.pc = (this.pc + 1) % MEM_SIZE;
+        if (this.carry === 1) {
+          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          this.pc = target;
+        } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
       }
 
       case OP.BN: {
         const target = nextWord() % MEM_SIZE;
-        if (this.negative) this.pc = target;
-        else this.pc = (this.pc + 1) % MEM_SIZE;
+        if (this.negative) {
+          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          this.pc = target;
+        } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
       }
 
       case OP.BE: {
         const target = nextWord() % MEM_SIZE;
-        if (this.even) this.pc = target;
-        else this.pc = (this.pc + 1) % MEM_SIZE;
+        if (this.even) {
+          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          this.pc = target;
+        } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
       }
 
       case OP.BZ: {
         const target = nextWord() % MEM_SIZE;
-        if (this.zero) this.pc = target;
-        else this.pc = (this.pc + 1) % MEM_SIZE;
+        if (this.zero) {
+          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          this.pc = target;
+        } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
       }
 
@@ -458,16 +478,18 @@ export class CPUStore {
     this.negative = ((this.accu & 0x8000) !== 0);
     this.even = ((this.accu & 0x0001) === 0);
 
-    // Update trace
-    trace.addr = this.addressBus;
-    trace.data = this.dataBus;
-    trace.read = this.read;
-    trace.write = this.write;
-    trace.accu = this.accu;
-    trace.carry = this.carry;
+    // Update trace (only when active to keep emulation ultra-fast)
+    if (trace) {
+      trace.addr = this.addressBus;
+      trace.data = this.dataBus;
+      trace.read = this.read;
+      trace.write = this.write;
+      trace.accu = this.accu;
+      trace.carry = this.carry;
 
-    if (this.history.length < 5000) {
-      this.history.push(trace);
+      if (this.history.length < 5000) {
+        this.history.push(trace);
+      }
     }
 
     return true;
@@ -507,6 +529,11 @@ export class CPUStore {
   run() {
     if (this.isRunning) return;
 
+    // Falls vorher angehalten/beendet: von vorn beginnen
+    if (this.halted) {
+      this.reset();
+    }
+
     // Speicherleerlauf-Prüfung: Falls PC auf 0 steht und RAM dort 0x0000 ist
     if (this.instructions === 0 && this.pc === 0 && this.memory[0] === 0) {
       this.halt("Speicher ist leer (Opcode 0x0000 bei PC 0x000). Bitte zuerst ein Programm kompilieren oder laden.");
@@ -533,14 +560,22 @@ export class CPUStore {
       let intervalMs = 20;
 
       if (hz >= 500) {
-        stepsPerBatch = 3500;
-        intervalMs = 10;
+        // Turbo Compute (Mandelbrot): bis zu 12.000 Schritte pro Batch
+        // Arcade Animation (Ping-Pong): schaltet dank frameCompleted sauber bei ~60 FPS
+        stepsPerBatch = 12000;
+        intervalMs = 16;
       } else if (hz >= 100) {
-        stepsPerBatch = Math.max(1, Math.round(hz / 20));
+        stepsPerBatch = 200;
         intervalMs = 20;
+      } else if (hz >= 14) {
+        stepsPerBatch = 1;
+        intervalMs = 70; // 14.3 Hz Original Hardware (70 ms pro Relais-Takt)
+      } else if (hz >= 5) {
+        stepsPerBatch = 1;
+        intervalMs = 200;
       } else {
         stepsPerBatch = 1;
-        intervalMs = Math.max(10, Math.round(1000 / hz));
+        intervalMs = 1000;
       }
 
       for (let i = 0; i < stepsPerBatch; i++) {
@@ -557,6 +592,11 @@ export class CPUStore {
           this.hitBreakpoint = this.pc;
           this.pause();
           return;
+        }
+        if (this.frameCompleted) {
+          this.frameCompleted = false;
+          this.displayWrites = 0;
+          break; // Vollständiges Display-Frame gerendert: Batch an Animation-Frame übergeben!
         }
       }
 
