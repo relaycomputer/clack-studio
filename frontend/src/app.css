@@ -69,6 +69,7 @@ html, body {
   color: var(--text-main);
   font-family: var(--font-ui);
   user-select: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 #app {
@@ -338,6 +339,79 @@ html, body {
   .main-grid {
     grid-template-columns: 1fr;
     height: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .left-column {
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .right-column {
+    height: auto;
+    min-height: 560px;
+    overflow: visible;
+  }
+
+  .workstation-panel {
+    height: auto;
+    min-height: 520px;
+    overflow: visible;
+  }
+
+  .tab-contents {
+    height: auto;
+    min-height: 480px;
+    overflow: visible;
+  }
+
+  .tab-pane {
+    height: auto;
+    min-height: 460px;
+  }
+
+  .basic-workspace-layout {
+    height: auto;
+    min-height: 440px;
+    flex-direction: column;
+  }
+
+  .basic-editor-box {
+    height: 420px;
+    min-height: 320px;
+  }
+
+  .basic-listing-box {
+    height: 300px;
+    min-height: 200px;
+  }
+
+  .editor-container {
+    height: 420px;
+    min-height: 320px;
+  }
+
+  .memory-grid-container {
+    min-height: 360px;
+    height: 360px;
+  }
+
+  .history-table-container {
+    min-height: 360px;
+    height: 360px;
+  }
+
+  .transport-buttons {
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    min-height: 38px;
+    padding: 8px 14px;
+    touch-action: manipulation;
   }
 }
 
@@ -993,6 +1067,8 @@ html, body {
   outline: none;
   resize: none;
   tab-size: 4;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .basic-workspace-layout {
@@ -1015,6 +1091,13 @@ html, body {
   height: 100% !important;
   flex: 1;
   min-height: 0;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.basic-editor-box .cm-content {
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .basic-editor-box .cm-scroller {

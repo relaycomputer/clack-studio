@@ -48,15 +48,31 @@
         changes: { from: 0, to: editorView.state.doc.length, insert: found.code }
       });
       currentFileName = found.filename;
-      statusType = '';
-      statusMessage = `BASIC-Vorlage '${found.filename}' geladen. Bereit zum Kompilieren.`;
 
       if (key === 'mandelbrot_64x64') {
         settings.setMatrixResolution(64);
         settings.setMatrixColorMode('mandelbrot');
+        settings.setMatrixMode('1bit');
       } else if (key === 'mandelbrot_32x32') {
         settings.setMatrixResolution(32);
         settings.setMatrixColorMode('mandelbrot');
+        settings.setMatrixMode('1bit');
+      } else {
+        settings.setMatrixResolution(32);
+        settings.setMatrixColorMode('theme');
+        settings.setMatrixMode('1bit');
+      }
+
+      // Sofort in CPU-Simulator laden und zur Ausführung bereitstellen
+      if (found.compiledCode) {
+        cpu.pause();
+        const count = cpu.loadSource(found.compiledCode);
+        listingContent = found.compiledCode;
+        showListing = true;
+        statusType = 'success';
+        statusMessage = `✅ Vorlage '${found.filename}' geladen (${count} Worte). Drücke RUN!`;
+      } else {
+        compileBasic(true);
       }
     }
   }

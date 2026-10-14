@@ -88,6 +88,16 @@
     if (found) {
       currentFileName = found.filename;
       setEditorContent(found.code);
+      if (found.compiledCode) {
+        cpu.pause();
+        const count = cpu.loadSource(found.compiledCode);
+        assembledArduinoCode = found.compiledCode;
+        compileStatus.loading = false;
+        compileStatus.success = true;
+        compileStatus.message = `✅ Vorlage '${found.filename}' geladen (${count} Worte). Drücke RUN!`;
+      } else {
+        assembleCode(true);
+      }
     }
   }
 
