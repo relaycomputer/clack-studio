@@ -30,7 +30,12 @@
         basicSetup,
         basicLanguage,
         clackTheme,
-        EditorView.lineWrapping
+        EditorView.lineWrapping,
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            selectedPreset = '';
+          }
+        })
       ]
     });
 
@@ -43,37 +48,39 @@
   function loadPreset(key) {
     selectedPreset = key;
     const found = BASIC_PRESETS_LIST.find(p => p.id === key);
-    if (editorView && found) {
+    if (!found) return;
+
+    if (editorView) {
       editorView.dispatch({
         changes: { from: 0, to: editorView.state.doc.length, insert: found.code }
       });
-      currentFileName = found.filename;
+    }
+    currentFileName = found.filename;
 
-      if (key === 'mandelbrot_64x64') {
-        settings.setMatrixResolution(64);
-        settings.setMatrixColorMode('mandelbrot');
-        settings.setMatrixMode('1bit');
-      } else if (key === 'mandelbrot_32x32') {
-        settings.setMatrixResolution(32);
-        settings.setMatrixColorMode('mandelbrot');
-        settings.setMatrixMode('1bit');
-      } else {
-        settings.setMatrixResolution(32);
-        settings.setMatrixColorMode('theme');
-        settings.setMatrixMode('1bit');
-      }
+    if (key === 'mandelbrot_64x64') {
+      settings.setMatrixResolution(64);
+      settings.setMatrixColorMode('mandelbrot');
+      settings.setMatrixMode('1bit');
+    } else if (key === 'mandelbrot_32x32') {
+      settings.setMatrixResolution(32);
+      settings.setMatrixColorMode('mandelbrot');
+      settings.setMatrixMode('1bit');
+    } else {
+      settings.setMatrixResolution(32);
+      settings.setMatrixColorMode('theme');
+      settings.setMatrixMode('1bit');
+    }
 
-      // Sofort in CPU-Simulator laden und zur Ausführung bereitstellen
-      if (found.compiledCode) {
-        cpu.pause();
-        const count = cpu.loadSource(found.compiledCode);
-        listingContent = found.compiledCode;
-        showListing = true;
-        statusType = 'success';
-        statusMessage = `✅ Vorlage '${found.filename}' geladen (${count} Worte). Drücke RUN!`;
-      } else {
-        compileBasic(true);
-      }
+    // Sofort in CPU-Simulator laden und zur Ausführung bereitstellen
+    if (found.compiledCode) {
+      cpu.pause();
+      const count = cpu.loadSource(found.compiledCode);
+      listingContent = found.compiledCode;
+      showListing = true;
+      statusType = 'success';
+      statusMessage = `✅ Vorlage '${found.filename}' geladen (${count} Worte). Drücke RUN!`;
+    } else {
+      compileBasic(true);
     }
   }
 
@@ -480,7 +487,7 @@ HALT
       currentFileName = 'decompiled.bas';
       settings.sharedBasicCode = '';
     } else {
-      compileBasic(true);
+      loadPreset('ping_pong');
     }
   });
 </script>

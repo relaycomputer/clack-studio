@@ -4,6 +4,7 @@
 
 import { audio } from '../audio/relayAudio.js';
 import { settings } from './settingsStore.svelte.js';
+import { BASIC_PRESETS_LIST } from '../data/basicPresets.js';
 
 export const MEM_SIZE = 1024;
 export const FRAMEBUFFER_64_START = 768; // 0x0300
@@ -540,8 +541,13 @@ export class CPUStore {
 
     // Speicherleerlauf-Prüfung: Falls PC auf 0 steht und RAM dort 0x0000 ist
     if (this.instructions === 0 && this.pc === 0 && this.memory[0] === 0) {
-      this.halt("Speicher ist leer (Opcode 0x0000 bei PC 0x000). Bitte zuerst ein Programm kompilieren oder laden.");
-      return;
+      const defaultPreset = BASIC_PRESETS_LIST.find(p => p.id === 'ping_pong') || BASIC_PRESETS_LIST[0];
+      if (defaultPreset && defaultPreset.compiledCode) {
+        this.loadSource(defaultPreset.compiledCode);
+      } else {
+        this.halt("Speicher ist leer (Opcode 0x0000 bei PC 0x000). Bitte zuerst ein Programm kompilieren oder laden.");
+        return;
+      }
     }
 
     this.isRunning = true;

@@ -21,7 +21,7 @@
     initClackWasm();
 
     // 2. Initialen Maschinencode laden (Ping-Pong aus Standard-BASIC-Preset)
-    if (cpu.instructions === 0 && cpu.cycles === 0 && cpu.memory[0] === 0) {
+    if (cpu.memory[0] === 0) {
       const defaultPreset = BASIC_PRESETS_LIST.find(p => p.id === 'ping_pong') || BASIC_PRESETS_LIST[0];
       if (defaultPreset && defaultPreset.compiledCode) {
         cpu.loadSource(defaultPreset.compiledCode);
