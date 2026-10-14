@@ -60,6 +60,7 @@ export class CPUStore {
   // Simulation execution loop timer
   isRunning = $state(false);
   timerId = null;
+  _lastSoundTime = 0;
 
   // Breakpoints
   breakpoints = $state(new Set());
@@ -532,8 +533,8 @@ export class CPUStore {
       let intervalMs = 20;
 
       if (hz >= 500) {
-        stepsPerBatch = 300;
-        intervalMs = 8;
+        stepsPerBatch = 3500;
+        intervalMs = 10;
       } else if (hz >= 100) {
         stepsPerBatch = Math.max(1, Math.round(hz / 20));
         intervalMs = 20;
@@ -560,7 +561,11 @@ export class CPUStore {
       }
 
       if (settings.soundEnabled) {
-        audio.playClick(0.9 + Math.random() * 0.2);
+        const now = performance.now();
+        if (now - this._lastSoundTime >= 70) {
+          this._lastSoundTime = now;
+          audio.playClick(0.9 + Math.random() * 0.2);
+        }
       }
 
       this.timerId = setTimeout(loop, intervalMs);
