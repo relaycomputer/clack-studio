@@ -52,6 +52,7 @@ export class CPUStore {
   lastWriteAddr = $state(-1);
   displayWrites = 0;
   frameCompleted = false;
+  callDepth = 0;
 
   // 1024-Word RAM array (Uint16Array wrapped in $state)
   memory = $state(new Uint16Array(MEM_SIZE));
@@ -131,6 +132,7 @@ export class CPUStore {
     this.lastWriteAddr = -1;
     this.displayWrites = 0;
     this.frameCompleted = false;
+    this.callDepth = 0;
     this.history = [];
   }
 
@@ -410,7 +412,7 @@ export class CPUStore {
           this.halt("Endlosschleife (BA auf sich selbst)");
           return false;
         }
-        if (target < currentPC && this.displayWrites >= 16) {
+        if (target < currentPC && this.callDepth === 0 && this.displayWrites >= 2) {
           this.frameCompleted = true;
         }
         this.pc = target;
@@ -420,7 +422,7 @@ export class CPUStore {
       case OP.BC: {
         const target = nextWord() % MEM_SIZE;
         if (this.carry === 1) {
-          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          if (target < currentPC && this.callDepth === 0 && this.displayWrites >= 2) this.frameCompleted = true;
           this.pc = target;
         } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
@@ -429,7 +431,7 @@ export class CPUStore {
       case OP.BN: {
         const target = nextWord() % MEM_SIZE;
         if (this.negative) {
-          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          if (target < currentPC && this.callDepth === 0 && this.displayWrites >= 2) this.frameCompleted = true;
           this.pc = target;
         } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
@@ -438,7 +440,7 @@ export class CPUStore {
       case OP.BE: {
         const target = nextWord() % MEM_SIZE;
         if (this.even) {
-          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          if (target < currentPC && this.callDepth === 0 && this.displayWrites >= 2) this.frameCompleted = true;
           this.pc = target;
         } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
@@ -447,7 +449,7 @@ export class CPUStore {
       case OP.BZ: {
         const target = nextWord() % MEM_SIZE;
         if (this.zero) {
-          if (target < currentPC && this.displayWrites >= 16) this.frameCompleted = true;
+          if (target < currentPC && this.callDepth === 0 && this.displayWrites >= 2) this.frameCompleted = true;
           this.pc = target;
         } else this.pc = (this.pc + 1) % MEM_SIZE;
         break;
@@ -455,12 +457,14 @@ export class CPUStore {
 
       case OP.CALL: {
         const target = nextWord() % MEM_SIZE;
+        this.callDepth++;
         this.stack = (this.pc + 1) % MEM_SIZE;
         this.pc = target;
         break;
       }
 
       case OP.RET:
+        if (this.callDepth > 0) this.callDepth--;
         this.pc = this.stack % MEM_SIZE;
         break;
 
@@ -560,9 +564,9 @@ export class CPUStore {
       let intervalMs = 20;
 
       if (hz >= 500) {
-        // Turbo Compute (Mandelbrot): bis zu 12.000 Schritte pro Batch
-        // Arcade Animation (Ping-Pong): schaltet dank frameCompleted sauber bei ~60 FPS
-        stepsPerBatch = 12000;
+        // Turbo Compute (Mandelbrot): bis zu 15.000 Schritte pro Batch (~1 Mio Schritte/Sek.)
+        // Arcade Animation (Ping-Pong / Matrix Bounce): schaltet dank frameCompleted sauber bei ~60 FPS
+        stepsPerBatch = 15000;
         intervalMs = 16;
       } else if (hz >= 100) {
         stepsPerBatch = 200;
