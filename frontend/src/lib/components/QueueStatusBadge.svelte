@@ -69,7 +69,7 @@
         <span class="queue-tag">+{queueStats.queueLength}</span>
       {/if}
       {#if lastDurationMs !== null}
-        <span class="last-time">⚡ {lastDurationMs.toFixed(1)}ms</span>
+        <span class="last-time">⚡ {lastDurationMs.toFixed(1)}ms{#if lastQueueWaitMs !== null && lastQueueWaitMs > 0}<span class="wait-tag" title="Queue-Wartezeit: {lastQueueWaitMs.toFixed(0)} ms"> +{lastQueueWaitMs.toFixed(0)}ms Q</span>{/if}</span>
       {/if}
     </div>
   {:else}
@@ -161,6 +161,12 @@
     margin-left: 2px;
     border-left: 1px solid rgba(255, 255, 255, 0.15);
     padding-left: 4px;
+  }
+
+  .wait-tag {
+    color: #fde68a;
+    font-size: 0.62rem;
+    opacity: 0.9;
   }
 
   .spin {

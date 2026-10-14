@@ -25,7 +25,8 @@
     success: null,
     message: '',
     words: 0,
-    timeMs: 0
+    timeMs: 0,
+    queueWaitMs: 0
   });
 
   let decompileStatus = $state({
@@ -239,6 +240,7 @@ LOOP:
           compileStatus.success = true;
           compileStatus.words = data.usedWords;
           compileStatus.timeMs = data.durationMs;
+          compileStatus.queueWaitMs = data.queueWaitMs || 0;
           const queueInfo = data.queueWaitMs > 0 ? ` (Warteschlange: ${data.queueWaitMs.toFixed(0)} ms)` : '';
           compileStatus.message = `Erfolg: ${data.usedWords} Worte in ${data.durationMs.toFixed(2)} ms${queueInfo}`;
           assembledArduinoCode = data.arduinoCode;
@@ -253,6 +255,10 @@ LOOP:
           compileStatus.message = data.error || 'Fehler beim Assemblieren';
           return false;
         }
+      } else if (resp.status === 429) {
+        compileStatus.success = false;
+        compileStatus.message = '⏳ Compiler-Warteschlange ist ausgelastet. Bitte versuche es in Kürze erneut.';
+        return false;
       }
     } catch (_) {
       // Backend not reached, fall back to WASM below
@@ -423,7 +429,7 @@ LOOP:
 
     <!-- Action Buttons -->
     <div class="toolbar-right">
-      <QueueStatusBadge isCompiling={compileStatus.loading} lastDurationMs={compileStatus.timeMs} />
+      <QueueStatusBadge isCompiling={compileStatus.loading} lastDurationMs={compileStatus.timeMs} lastQueueWaitMs={compileStatus.queueWaitMs} />
       <button 
         class="action-btn compile-btn"
         disabled={compileStatus.loading}
