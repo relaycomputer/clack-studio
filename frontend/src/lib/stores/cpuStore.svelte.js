@@ -85,6 +85,23 @@ export class CPUStore {
     this.hitBreakpoint = null;
   }
 
+  // --- Hardware I/O Registers (Addr 2 = Output, Addr 3 = Input) ---
+  toggleInputBit(bit) {
+    if (bit < 0 || bit > 7) return;
+    const current = this.memory[3] & 0xFF;
+    this.memory[3] = current ^ (1 << bit);
+  }
+
+  setInputBit(bit, on) {
+    if (bit < 0 || bit > 7) return;
+    const current = this.memory[3] & 0xFF;
+    this.memory[3] = on ? (current | (1 << bit)) : (current & ~(1 << bit));
+  }
+
+  clearInputRegister() {
+    this.memory[3] = 0;
+  }
+
   getInstructionCycles(cmd) {
     switch (cmd) {
       case OP.NOP: return 2;   // Fetch Opcode (2 Takte)
@@ -135,9 +152,11 @@ export class CPUStore {
     this.frameCompleted = false;
     this.callDepth = 0;
     this.history = [];
+    this.memory[2] = 0; // Hardware Output Register (Addr 2) zurücksetzen
   }
 
   loadSource(text) {
+    const preservedInput = this.memory[3] & 0xFF;
     this.reset();
     const newMem = new Uint16Array(MEM_SIZE);
     let count = 0;
@@ -240,6 +259,10 @@ export class CPUStore {
           }
         }
       }
+    }
+
+    if (newMem[3] === 0 && preservedInput !== 0) {
+      newMem[3] = preservedInput;
     }
 
     this.memory = newMem;
