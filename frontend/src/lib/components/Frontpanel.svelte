@@ -8,8 +8,8 @@
   let signedAccu = $derived(cpu.accu > 32767 ? cpu.accu - 65536 : cpu.accu);
   let disasmIR = $derived(cpu.disassembleInstruction(cpu.ir, cpu.memory[(cpu.pc + 1) % 1024]).text.split(' ')[0]);
   let dataSub = $derived(cpu.write !== 0 ? `WR: 0x${cpu.write.toString(16).toUpperCase()}` : (cpu.read !== 0 ? `RD: 0x${cpu.read.toString(16).toUpperCase()}` : 'idle'));
-  let outReg = $derived((cpu.memory[2] || 0) & 0xFF);
-  let inReg = $derived((cpu.memory[3] || 0) & 0xFF);
+  let outReg = $derived(cpu.outputRegister);
+  let inReg = $derived(cpu.inputRegister);
 </script>
 
 <div class="panel frontpanel">

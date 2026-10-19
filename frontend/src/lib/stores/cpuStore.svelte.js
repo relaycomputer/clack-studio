@@ -51,6 +51,8 @@ export class CPUStore {
   halted = $state(false);
   haltReason = $state('');
   lastWriteAddr = $state(-1);
+  outputRegister = $state(0); // Hardware Output Register (Addr 2)
+  inputRegister = $state(0);  // Hardware Input Register (Addr 3 - 8 Bits)
   displayWrites = 0;
   frameCompleted = false;
   callDepth = 0;
@@ -88,17 +90,18 @@ export class CPUStore {
   // --- Hardware I/O Registers (Addr 2 = Output, Addr 3 = Input) ---
   toggleInputBit(bit) {
     if (bit < 0 || bit > 7) return;
-    const current = this.memory[3] & 0xFF;
-    this.memory[3] = current ^ (1 << bit);
+    this.inputRegister = (this.inputRegister ^ (1 << bit)) & 0xFF;
+    this.memory[3] = this.inputRegister;
   }
 
   setInputBit(bit, on) {
     if (bit < 0 || bit > 7) return;
-    const current = this.memory[3] & 0xFF;
-    this.memory[3] = on ? (current | (1 << bit)) : (current & ~(1 << bit));
+    this.inputRegister = (on ? (this.inputRegister | (1 << bit)) : (this.inputRegister & ~(1 << bit))) & 0xFF;
+    this.memory[3] = this.inputRegister;
   }
 
   clearInputRegister() {
+    this.inputRegister = 0;
     this.memory[3] = 0;
   }
 
@@ -152,7 +155,9 @@ export class CPUStore {
     this.frameCompleted = false;
     this.callDepth = 0;
     this.history = [];
-    this.memory[2] = 0; // Hardware Output Register (Addr 2) zurücksetzen
+    this.memory[2] = 0;
+    this.outputRegister = 0;
+    this.memory[3] = this.inputRegister; // Input-Schalterstellungen beibehalten
   }
 
   loadSource(text) {
@@ -261,9 +266,12 @@ export class CPUStore {
       }
     }
 
-    if (newMem[3] === 0 && preservedInput !== 0) {
-      newMem[3] = preservedInput;
+    if (newMem[3] === 0 && this.inputRegister !== 0) {
+      newMem[3] = this.inputRegister;
+    } else if (newMem[3] !== 0) {
+      this.inputRegister = newMem[3] & 0xFF;
     }
+    this.outputRegister = newMem[2] & 0xFF;
 
     this.memory = newMem;
     return count;
@@ -356,6 +364,8 @@ export class CPUStore {
       case OP.STAM: {
         const addr = nextWord() % MEM_SIZE;
         this.memory[addr] = this.accu;
+        if (addr === 2) this.outputRegister = this.accu & 0xFF;
+        if (addr === 3) this.inputRegister = this.accu & 0xFF;
         this.addressBus = addr;
         this.dataBus = this.accu;
         this.write = this.accu;
@@ -369,6 +379,8 @@ export class CPUStore {
         const ptrAddr = nextWord() % MEM_SIZE;
         const targetAddr = this.memory[ptrAddr] % MEM_SIZE;
         this.memory[targetAddr] = this.accu;
+        if (targetAddr === 2) this.outputRegister = this.accu & 0xFF;
+        if (targetAddr === 3) this.inputRegister = this.accu & 0xFF;
         this.addressBus = targetAddr;
         this.dataBus = this.accu;
         this.write = this.accu;
