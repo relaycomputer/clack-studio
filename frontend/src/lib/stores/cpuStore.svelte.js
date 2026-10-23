@@ -274,6 +274,11 @@ export class CPUStore {
     this.outputRegister = newMem[2] & 0xFF;
 
     this.memory = newMem;
+    this.pc = 0;
+    this.instructions = 0;
+    this.cycles = 0;
+    this.halted = false;
+    this.haltReason = '';
     return count;
   }
 

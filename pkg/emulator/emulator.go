@@ -178,6 +178,7 @@ func (m *Machine) LoadProgram(source string) (int, error) {
 		Zero:   true,
 	}
 	m.History = m.History[:0]
+	m.LastModified = make(map[uint16]bool)
 	return count, nil
 }
 

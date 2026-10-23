@@ -5,9 +5,20 @@ const { execSync } = require('child_process');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const EXAMPLES_DIR = path.join(ROOT_DIR, 'examples');
 const OUT_DIR = path.join(ROOT_DIR, 'frontend', 'src', 'lib', 'data');
-const CLACK_BIN = path.resolve(ROOT_DIR, '..', 'clack-basic', 'bin', 'clack');
+const CLACK_DIR = path.resolve(ROOT_DIR, '..', 'clack-basic');
+const CLACK_BIN = path.join(CLACK_DIR, 'bin', 'clack');
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
+
+if (fs.existsSync(path.join(CLACK_DIR, 'go.mod'))) {
+  try {
+    fs.mkdirSync(path.join(CLACK_DIR, 'bin'), { recursive: true });
+    execSync('go build -o bin/clack .', { cwd: CLACK_DIR, stdio: 'pipe' });
+    console.log(`[sync-examples] Built latest clack-basic compiler at ${CLACK_BIN}`);
+  } catch (err) {
+    console.warn(`[sync-examples] Could not rebuild clack-basic binary:`, err.message);
+  }
+}
 
 function parseTitle(content, fallback) {
   const lines = content.split('\n');
@@ -69,6 +80,10 @@ function processDir(subdir, ext, exportName) {
     let compiledCode = '';
     if (subdir === 'basic') {
       compiledCode = compileFile(fullPath, 'basic');
+      const txtPath = fullPath.replace(/\.bas$/i, '.txt');
+      if (compiledCode && fs.existsSync(txtPath)) {
+        fs.writeFileSync(txtPath, compiledCode, 'utf8');
+      }
     } else if (subdir === 'asm') {
       compiledCode = compileFile(fullPath, 'asm');
     } else if (subdir === 'machine') {

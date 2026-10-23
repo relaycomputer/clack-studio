@@ -15,6 +15,7 @@ jobs:
       - name: Clone Clack-Basic Dependency
         run: |
           git clone https://git.latentforge.dev/relay-computing/clack-basic.git ../clack-basic
+          cd ../clack-basic && go build -o bin/clack .
 
       - name: Toolchain Info
         run: |
