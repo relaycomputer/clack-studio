@@ -7,21 +7,21 @@
     return '0x' + (v || 0).toString(16).toUpperCase().padStart(l, '0');
   }
 
-  // Generate disassembled rows dynamically from current memory
+  // Generate disassembled rows only when memory changes (not on every PC step!)
   let rows = $derived.by(() => {
+    const _ver = cpu.memVersion;
+    const mem = cpu.memory;
     const list = [];
     let i = 0;
     while (i < MEM_SIZE) {
-      const cmd = cpu.memory[i];
-      const op = i + 1 < MEM_SIZE ? cpu.memory[i + 1] : 0;
+      const cmd = mem[i];
+      const op = i + 1 < MEM_SIZE ? mem[i + 1] : 0;
       const dis = cpu.disassembleInstruction(cmd, op);
 
       list.push({
         addr: i,
         cmd: cmd,
-        dis: dis,
-        isActive: (i === cpu.pc),
-        isBreakpoint: cpu.breakpoints.has(i)
+        dis: dis
       });
 
       i += dis.words;
@@ -52,19 +52,21 @@
   </div>
   <div class="disasm-container" bind:this={listContainer}>
     {#each rows as row (row.addr)}
+      {@const isActive = row.addr === cpu.pc}
+      {@const isBreakpoint = cpu.breakpoints.has(row.addr)}
       <div 
         class="disasm-row" 
-        class:active={row.isActive}
-        class:has-breakpoint={row.isBreakpoint}
+        class:active={isActive}
+        class:has-breakpoint={isBreakpoint}
         role="button"
         tabindex="0"
-        aria-label="Breakpoint bei Adresse 0x{hex(row.addr, 3)} umschalten. Status: {row.isBreakpoint ? 'Aktiv' : 'Inaktiv'}"
+        aria-label="Breakpoint bei Adresse 0x{hex(row.addr, 3)} umschalten. Status: {isBreakpoint ? 'Aktiv' : 'Inaktiv'}"
         onclick={() => cpu.toggleBreakpoint(row.addr)}
         onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cpu.toggleBreakpoint(row.addr); } }}
         title="Klick: Breakpoint bei 0x{hex(row.addr, 3)} umschalten"
       >
-        <span class="disasm-bp" class:active-bp={row.isBreakpoint}>
-          {row.isBreakpoint ? '●' : '○'}
+        <span class="disasm-bp" class:active-bp={isBreakpoint}>
+          {isBreakpoint ? '●' : '○'}
         </span>
         <span class="disasm-addr">{hex(row.addr, 3)}</span>
         <span class="disasm-hex">{hex(row.cmd, 4)}</span>

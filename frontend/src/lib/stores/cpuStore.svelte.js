@@ -59,6 +59,7 @@ export class CPUStore {
 
   // 1024-Word RAM array (Uint16Array wrapped in $state)
   memory = $state(new Uint16Array(MEM_SIZE));
+  memVersion = $state(0);
 
   // Logic Analyzer Execution Trace History
   history = $state([]);
@@ -571,6 +572,316 @@ export class CPUStore {
     }
   }
 
+  // Hochoptimierte Batch-Ausführung (100Hz / Turbo) ohne Svelte-$state-Signal-Overhead pro Takt!
+  stepBatch(maxSteps) {
+    if (this.halted) return false;
+
+    const mem = this.memory;
+    const bps = this.breakpoints;
+    const hasBp = bps.size > 0;
+
+    let pc = this.pc;
+    let accu = this.accu;
+    let stack = this.stack;
+    let carry = this.carry;
+    let ir = this.ir;
+    let addressBus = this.addressBus;
+    let dataBus = this.dataBus;
+    let read = 0;
+    let write = 0;
+    let lastWriteAddr = this.lastWriteAddr;
+    let instructions = this.instructions;
+    let cycles = this.cycles;
+    let callDepth = this.callDepth;
+    let displayWrites = this.displayWrites;
+    let outputRegister = this.outputRegister;
+    let inputRegister = this.inputRegister;
+    let memChanged = false;
+    let haltedReason = '';
+    let hitBp = null;
+
+    for (let i = 0; i < maxSteps; i++) {
+      if (hasBp && bps.has(pc)) {
+        hitBp = pc;
+        break;
+      }
+
+      const currentPC = pc;
+      const cmd = mem[pc];
+      ir = cmd;
+      instructions++;
+
+      read = 0;
+      write = 0;
+
+      switch (cmd) {
+        case OP.NOP:
+          cycles += 2;
+          pc = (pc + 1) & 0x03FF;
+          break;
+
+        case OP.LDA: {
+          cycles += 4;
+          const opAddr = (pc + 1) & 0x03FF;
+          const val = mem[opAddr];
+          accu = val;
+          dataBus = val;
+          addressBus = opAddr;
+          read = val;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.LDAM: {
+          cycles += 6;
+          const addr = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          const val = mem[addr];
+          accu = val;
+          addressBus = addr;
+          dataBus = val;
+          read = val;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.LDAMM: {
+          cycles += 8;
+          const ptrAddr = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          const targetAddr = mem[ptrAddr] & 0x03FF;
+          const val = mem[targetAddr];
+          accu = val;
+          addressBus = targetAddr;
+          dataBus = val;
+          read = val;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.STAM: {
+          cycles += 6;
+          const addr = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          mem[addr] = accu;
+          memChanged = true;
+          if (addr === 2) outputRegister = accu & 0xFF;
+          if (addr === 3) inputRegister = accu & 0xFF;
+          addressBus = addr;
+          dataBus = accu;
+          write = accu;
+          lastWriteAddr = addr;
+          if (addr >= 768 && addr < 1024) displayWrites++;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.STAMM: {
+          cycles += 8;
+          const ptrAddr = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          const targetAddr = mem[ptrAddr] & 0x03FF;
+          mem[targetAddr] = accu;
+          memChanged = true;
+          if (targetAddr === 2) outputRegister = accu & 0xFF;
+          if (targetAddr === 3) inputRegister = accu & 0xFF;
+          addressBus = targetAddr;
+          dataBus = accu;
+          write = accu;
+          lastWriteAddr = targetAddr;
+          if (targetAddr >= 768 && targetAddr < 1024) displayWrites++;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.ADD: {
+          cycles += 4;
+          const opAddr = (pc + 1) & 0x03FF;
+          const operand = mem[opAddr];
+          const sum = accu + operand;
+          carry = (sum > 0xFFFF) ? 1 : 0;
+          accu = sum & 0xFFFF;
+          addressBus = opAddr;
+          dataBus = operand;
+          read = operand;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.AND: {
+          cycles += 4;
+          const opAddr = (pc + 1) & 0x03FF;
+          const operand = mem[opAddr];
+          accu = (accu & operand) & 0xFFFF;
+          addressBus = opAddr;
+          dataBus = operand;
+          read = operand;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.OR: {
+          cycles += 4;
+          const opAddr = (pc + 1) & 0x03FF;
+          const operand = mem[opAddr];
+          accu = (accu | operand) & 0xFFFF;
+          addressBus = opAddr;
+          dataBus = operand;
+          read = operand;
+          pc = (pc + 2) & 0x03FF;
+          break;
+        }
+
+        case OP.NOT:
+          cycles += 4;
+          accu = (~accu) & 0xFFFF;
+          pc = (pc + 2) & 0x03FF;
+          break;
+
+        case OP.SHR:
+          cycles += 4;
+          carry = accu & 1;
+          accu = (accu >> 1) & 0xFFFF;
+          pc = (pc + 2) & 0x03FF;
+          break;
+
+        case OP.SHL:
+          cycles += 4;
+          carry = (accu & 0x8000) ? 1 : 0;
+          accu = (accu << 1) & 0xFFFF;
+          pc = (pc + 2) & 0x03FF;
+          break;
+
+        case OP.BA: {
+          cycles += 4;
+          const target = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          if (target === currentPC) {
+            haltedReason = "Endlosschleife (BA auf sich selbst)";
+            break;
+          }
+          const frameDone = (target < currentPC && callDepth === 0 && displayWrites >= 2);
+          pc = target;
+          if (frameDone) {
+            displayWrites = 0;
+            i = maxSteps; // Frame abgeschlossen -> raus an requestAnimationFrame / Timer
+          }
+          break;
+        }
+
+        case OP.BC: {
+          cycles += 4;
+          const target = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          if (carry === 1) {
+            const frameDone = (target < currentPC && callDepth === 0 && displayWrites >= 2);
+            pc = target;
+            if (frameDone) { displayWrites = 0; i = maxSteps; }
+          } else {
+            pc = (pc + 2) & 0x03FF;
+          }
+          break;
+        }
+
+        case OP.BN: {
+          cycles += 4;
+          const target = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          if ((accu & 0x8000) !== 0) {
+            const frameDone = (target < currentPC && callDepth === 0 && displayWrites >= 2);
+            pc = target;
+            if (frameDone) { displayWrites = 0; i = maxSteps; }
+          } else {
+            pc = (pc + 2) & 0x03FF;
+          }
+          break;
+        }
+
+        case OP.BE: {
+          cycles += 4;
+          const target = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          if ((accu & 0x0001) === 0) {
+            const frameDone = (target < currentPC && callDepth === 0 && displayWrites >= 2);
+            pc = target;
+            if (frameDone) { displayWrites = 0; i = maxSteps; }
+          } else {
+            pc = (pc + 2) & 0x03FF;
+          }
+          break;
+        }
+
+        case OP.BZ: {
+          cycles += 4;
+          const target = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          if (accu === 0) {
+            const frameDone = (target < currentPC && callDepth === 0 && displayWrites >= 2);
+            pc = target;
+            if (frameDone) { displayWrites = 0; i = maxSteps; }
+          } else {
+            pc = (pc + 2) & 0x03FF;
+          }
+          break;
+        }
+
+        case OP.CALL: {
+          cycles += 4;
+          const target = mem[(pc + 1) & 0x03FF] & 0x03FF;
+          callDepth++;
+          stack = (pc + 2) & 0x03FF;
+          pc = target;
+          break;
+        }
+
+        case OP.RET:
+          cycles += 5;
+          if (callDepth > 0) callDepth--;
+          pc = stack & 0x03FF;
+          break;
+
+        default:
+          cycles += 2;
+          if (cmd === 0 && instructions === 1) {
+            haltedReason = "Speicher ist leer (Opcode 0x0000 bei PC 0x000). Bitte zuerst ein Programm kompilieren oder laden.";
+          } else {
+            haltedReason = `Halt / Unbekannter Opcode 0x${(cmd || 0).toString(16).toUpperCase().padStart(4, '0')} bei PC 0x${currentPC.toString(16).toUpperCase().padStart(3, '0')}`;
+          }
+          break;
+      }
+
+      if (haltedReason) break;
+      if (hasBp && bps.has(pc)) {
+        hitBp = pc;
+        break;
+      }
+    }
+
+    // Einmaliges Zurückschreiben aller Register in Svelte 5 $state-Signale (1x pro Frame statt 15.000x!)
+    this.pc = pc;
+    this.accu = accu;
+    this.stack = stack;
+    this.carry = carry;
+    this.zero = (accu === 0);
+    this.negative = ((accu & 0x8000) !== 0);
+    this.even = ((accu & 0x0001) === 0);
+    this.ir = ir;
+    this.addressBus = addressBus;
+    this.dataBus = dataBus;
+    this.read = read;
+    this.write = write;
+    this.lastWriteAddr = lastWriteAddr;
+    this.instructions = instructions;
+    this.cycles = cycles;
+    this.callDepth = callDepth;
+    this.displayWrites = displayWrites;
+    this.outputRegister = outputRegister;
+    this.inputRegister = inputRegister;
+    if (memChanged) this.memVersion++;
+
+    if (haltedReason) {
+      this.halt(haltedReason);
+      return false;
+    }
+    if (hitBp !== null) {
+      this.hitBreakpoint = hitBp;
+      this.pause();
+      return false;
+    }
+    return true;
+  }
+
   run() {
     if (this.isRunning) return;
 
@@ -610,9 +921,9 @@ export class CPUStore {
       let intervalMs = 20;
 
       if (hz >= 500) {
-        // Turbo Compute (Mandelbrot): bis zu 15.000 Schritte pro Batch (~1 Mio Schritte/Sek.)
-        // Arcade Animation (Ping-Pong / Matrix Bounce): schaltet dank frameCompleted sauber bei ~60 FPS
-        stepsPerBatch = 15000;
+        // Turbo Compute (Mandelbrot): bis zu 25.000 Schritte pro Batch (~1.5 Mio Schritte/Sek.)
+        // Arcade Animation (Ping-Pong / Matrix Bounce): schaltet dank frameDone sauber bei ~60 FPS
+        stepsPerBatch = 25000;
         intervalMs = 16;
       } else if (hz >= 100) {
         stepsPerBatch = 200;
@@ -628,25 +939,31 @@ export class CPUStore {
         intervalMs = 1000;
       }
 
-      for (let i = 0; i < stepsPerBatch; i++) {
-        if (this.breakpoints.has(this.pc)) {
-          this.hitBreakpoint = this.pc;
-          this.pause();
+      if (stepsPerBatch > 1 && settings.activeTab !== 'tab-history') {
+        if (!this.stepBatch(stepsPerBatch)) {
           return;
         }
-        if (!this.step()) {
-          this.pause();
-          return;
-        }
-        if (this.breakpoints.has(this.pc)) {
-          this.hitBreakpoint = this.pc;
-          this.pause();
-          return;
-        }
-        if (this.frameCompleted) {
-          this.frameCompleted = false;
-          this.displayWrites = 0;
-          break; // Vollständiges Display-Frame gerendert: Batch an Animation-Frame übergeben!
+      } else {
+        for (let i = 0; i < stepsPerBatch; i++) {
+          if (this.breakpoints.has(this.pc)) {
+            this.hitBreakpoint = this.pc;
+            this.pause();
+            return;
+          }
+          if (!this.step()) {
+            this.pause();
+            return;
+          }
+          if (this.breakpoints.has(this.pc)) {
+            this.hitBreakpoint = this.pc;
+            this.pause();
+            return;
+          }
+          if (this.frameCompleted) {
+            this.frameCompleted = false;
+            this.displayWrites = 0;
+            break;
+          }
         }
       }
 
@@ -675,6 +992,7 @@ export class CPUStore {
   setMemoryCell(addr, val) {
     if (addr >= 0 && addr < MEM_SIZE) {
       this.memory[addr] = val & 0xFFFF;
+      this.memVersion++;
     }
   }
 
@@ -682,6 +1000,7 @@ export class CPUStore {
     for (let i = startAddr; i < startAddr + count && i < MEM_SIZE; i++) {
       this.memory[i] = 0;
     }
+    this.memVersion++;
   }
 
   disassembleInstruction(cmd, operand = 0) {

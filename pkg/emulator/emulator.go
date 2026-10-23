@@ -109,6 +109,12 @@ func (m *Machine) Reset() {
 	m.LastModified = make(map[uint16]bool)
 }
 
+var (
+	reBlockComment = regexp.MustCompile(`(?s)/\*.*?\*/`)
+	reCArray       = regexp.MustCompile(`(?i)daten\[\s*(\d+)\s*\]\s*=\s*(0x[0-9A-Fa-f]+|\d+)\s*;`)
+	reAddrVal      = regexp.MustCompile(`^\s*(\d+)\s+(0x[0-9A-Fa-f]+|\d+)\b`)
+)
+
 func (m *Machine) LoadProgram(source string) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -119,12 +125,7 @@ func (m *Machine) LoadProgram(source string) (int, error) {
 	}
 
 	// Strip block comments /* ... */
-	reBlockComment := regexp.MustCompile(`(?s)/\*.*?\*/`)
 	cleanSource := reBlockComment.ReplaceAllString(source, "")
-
-	// Pattern for daten[123] = 0x1400; or 123 0x1400
-	reCArray := regexp.MustCompile(`(?i)daten\[\s*(\d+)\s*\]\s*=\s*(0x[0-9A-Fa-f]+|\d+)\s*;`)
-	reAddrVal := regexp.MustCompile(`^\s*(\d+)\s+(0x[0-9A-Fa-f]+|\d+)\b`)
 
 	count := 0
 	lines := strings.Split(cleanSource, "\n")
@@ -249,20 +250,10 @@ func (m *Machine) Step() bool {
 		opVal = m.Memory[pc+1]
 	}
 
-	mnemonic, _ := Disassemble(cmd, opVal)
-	entry := TraceEntry{
-		Index:      len(m.History) + 1,
-		Cmd:        cmd,
-		Mnemonic:   mnemonic,
-		PC:         pc,
-		Accu:       m.State.Accu,
-		AddressBus: 0,
-		DataBus:    0,
-		Read:       0,
-		Write:      0,
-		Carry:      m.State.Carry,
-		Stack:      m.State.Stack,
-		Cycles:     m.State.Cycles,
+	recordTrace := len(m.History) < HistoryBuffer
+	var prevStack uint16
+	if recordTrace {
+		prevStack = m.State.Stack
 	}
 
 	switch cmd {
@@ -366,7 +357,13 @@ func (m *Machine) Step() bool {
 		m.State.Cycles += 4
 
 	case OpBA:
-		m.State.PC = opVal & 0x03FF
+		target := opVal & 0x03FF
+		if target == pc {
+			m.State.Cycles += 4
+			m.halt("Endlosschleife (BA auf sich selbst)")
+			return false
+		}
+		m.State.PC = target
 		m.State.Cycles += 4
 
 	case OpBC:
@@ -420,17 +417,23 @@ func (m *Machine) Step() bool {
 	m.State.Negative = ((m.State.Accu & 0x8000) != 0)
 	m.State.Even = ((m.State.Accu & 0x0001) == 0)
 
-	// Record trace
-	entry.AddressBus = m.State.AddressBus
-	entry.DataBus = m.State.DataBus
-	entry.Read = m.State.Read
-	entry.Write = m.State.Write
-	entry.Accu = m.State.Accu
-	entry.Carry = m.State.Carry
-	entry.Cycles = m.State.Cycles
-
-	if len(m.History) < HistoryBuffer {
-		m.History = append(m.History, entry)
+	// Record trace only when history buffer has space
+	if recordTrace {
+		mnemonic, _ := Disassemble(cmd, opVal)
+		m.History = append(m.History, TraceEntry{
+			Index:      len(m.History) + 1,
+			Cmd:        cmd,
+			Mnemonic:   mnemonic,
+			PC:         pc,
+			Accu:       m.State.Accu,
+			AddressBus: m.State.AddressBus,
+			DataBus:    m.State.DataBus,
+			Read:       m.State.Read,
+			Write:      m.State.Write,
+			Carry:      m.State.Carry,
+			Stack:      prevStack,
+			Cycles:     m.State.Cycles,
+		})
 	}
 
 	return true

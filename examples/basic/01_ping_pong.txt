@@ -14,7 +14,7 @@ CLR
 10 0x2800 // Speichere __cls_end_addr
 11 0x0399 // Operand #0x0399 (921)
 12 0x5000 // CALL __cls (Display loeschen)
-13 0x0306 // Operand #0x0000 (0)
+13 0x023A // Operand #0x0000 (0)
 14 0x1400 // Konstante 16
 15 0x0010 // Operand #0x0010 (16)
 16 0x2800 // LET BX = Accu
@@ -67,7 +67,7 @@ CLR
 64 0x2800 // PSET Color
 65 0x03A6 // Operand #0x03A6 (934)
 66 0x5000 // CALL __pset
-67 0x0321 // Operand #0x0000 (0)
+67 0x0255 // Operand #0x0000 (0)
 68 0x1400 // Konstante 1
 69 0x0001 // Operand #0x0001 (1)
 70 0x2800 // PSET X
@@ -82,7 +82,7 @@ CLR
 80 0x2800 // PSET Color
 81 0x03A6 // Operand #0x03A6 (934)
 82 0x5000 // CALL __pset
-83 0x0321 // Operand #0x0000 (0)
+83 0x0255 // Operand #0x0000 (0)
 84 0x1400 // Konstante 1
 85 0x0001 // Operand #0x0001 (1)
 86 0x2800 // PSET X
@@ -97,7 +97,7 @@ CLR
 96 0x2800 // PSET Color
 97 0x03A6 // Operand #0x03A6 (934)
 98 0x5000 // CALL __pset
-99 0x0321 // Operand #0x0000 (0)
+99 0x0255 // Operand #0x0000 (0)
 100 0x1400 // Konstante 1
 101 0x0001 // Operand #0x0001 (1)
 102 0x2800 // PSET X
@@ -112,7 +112,7 @@ CLR
 112 0x2800 // PSET Color
 113 0x03A6 // Operand #0x03A6 (934)
 114 0x5000 // CALL __pset
-115 0x0321 // Operand #0x0000 (0)
+115 0x0255 // Operand #0x0000 (0)
 116 0x1400 // Konstante 30
 117 0x001E // Operand #0x001E (30)
 118 0x2800 // PSET X
@@ -125,7 +125,7 @@ CLR
 126 0x2800 // PSET Color
 127 0x03A6 // Operand #0x03A6 (934)
 128 0x5000 // CALL __pset
-129 0x0321 // Operand #0x0000 (0)
+129 0x0255 // Operand #0x0000 (0)
 130 0x1400 // Konstante 30
 131 0x001E // Operand #0x001E (30)
 132 0x2800 // PSET X
@@ -140,7 +140,7 @@ CLR
 142 0x2800 // PSET Color
 143 0x03A6 // Operand #0x03A6 (934)
 144 0x5000 // CALL __pset
-145 0x0321 // Operand #0x0000 (0)
+145 0x0255 // Operand #0x0000 (0)
 146 0x1400 // Konstante 30
 147 0x001E // Operand #0x001E (30)
 148 0x2800 // PSET X
@@ -155,7 +155,7 @@ CLR
 158 0x2800 // PSET Color
 159 0x03A6 // Operand #0x03A6 (934)
 160 0x5000 // CALL __pset
-161 0x0321 // Operand #0x0000 (0)
+161 0x0255 // Operand #0x0000 (0)
 162 0x1400 // Konstante 30
 163 0x001E // Operand #0x001E (30)
 164 0x2800 // PSET X
@@ -170,7 +170,7 @@ CLR
 174 0x2800 // PSET Color
 175 0x03A6 // Operand #0x03A6 (934)
 176 0x5000 // CALL __pset
-177 0x0321 // Operand #0x0000 (0)
+177 0x0255 // Operand #0x0000 (0)
 178 0x1800 // Variable OLD_BX
 179 0x039C // Operand #0x039C (924)
 180 0x2800 // PSET X
@@ -183,7 +183,7 @@ CLR
 188 0x2800 // PSET Color
 189 0x03A6 // Operand #0x03A6 (934)
 190 0x5000 // CALL __pset
-191 0x0321 // Operand #0x0000 (0)
+191 0x0255 // Operand #0x0000 (0)
 192 0x1400 // Konstante 1
 193 0x0001 // Operand #0x0001 (1)
 194 0x2800 // PSET X
@@ -197,7 +197,7 @@ CLR
 202 0x2800 // PSET Color
 203 0x03A6 // Operand #0x03A6 (934)
 204 0x5000 // CALL __pset
-205 0x0321 // Operand #0x0000 (0)
+205 0x0255 // Operand #0x0000 (0)
 206 0x1400 // Konstante 1
 207 0x0001 // Operand #0x0001 (1)
 208 0x2800 // PSET X
@@ -213,7 +213,7 @@ CLR
 218 0x2800 // PSET Color
 219 0x03A6 // Operand #0x03A6 (934)
 220 0x5000 // CALL __pset
-221 0x0321 // Operand #0x0000 (0)
+221 0x0255 // Operand #0x0000 (0)
 222 0x1400 // Konstante 1
 223 0x0001 // Operand #0x0001 (1)
 224 0x2800 // PSET X
@@ -229,7 +229,7 @@ CLR
 234 0x2800 // PSET Color
 235 0x03A6 // Operand #0x03A6 (934)
 236 0x5000 // CALL __pset
-237 0x0321 // Operand #0x0000 (0)
+237 0x0255 // Operand #0x0000 (0)
 238 0x1400 // Konstante 1
 239 0x0001 // Operand #0x0001 (1)
 240 0x2800 // PSET X
@@ -245,7 +245,7 @@ CLR
 250 0x2800 // PSET Color
 251 0x03A6 // Operand #0x03A6 (934)
 252 0x5000 // CALL __pset
-253 0x0321 // Operand #0x0000 (0)
+253 0x0255 // Operand #0x0000 (0)
 254 0x1400 // Konstante 30
 255 0x001E // Operand #0x001E (30)
 256 0x2800 // PSET X
@@ -259,7 +259,7 @@ CLR
 264 0x2800 // PSET Color
 265 0x03A6 // Operand #0x03A6 (934)
 266 0x5000 // CALL __pset
-267 0x0321 // Operand #0x0000 (0)
+267 0x0255 // Operand #0x0000 (0)
 268 0x1400 // Konstante 30
 269 0x001E // Operand #0x001E (30)
 270 0x2800 // PSET X
@@ -275,7 +275,7 @@ CLR
 280 0x2800 // PSET Color
 281 0x03A6 // Operand #0x03A6 (934)
 282 0x5000 // CALL __pset
-283 0x0321 // Operand #0x0000 (0)
+283 0x0255 // Operand #0x0000 (0)
 284 0x1400 // Konstante 30
 285 0x001E // Operand #0x001E (30)
 286 0x2800 // PSET X
@@ -291,7 +291,7 @@ CLR
 296 0x2800 // PSET Color
 297 0x03A6 // Operand #0x03A6 (934)
 298 0x5000 // CALL __pset
-299 0x0321 // Operand #0x0000 (0)
+299 0x0255 // Operand #0x0000 (0)
 300 0x1400 // Konstante 30
 301 0x001E // Operand #0x001E (30)
 302 0x2800 // PSET X
@@ -307,7 +307,7 @@ CLR
 312 0x2800 // PSET Color
 313 0x03A6 // Operand #0x03A6 (934)
 314 0x5000 // CALL __pset
-315 0x0321 // Operand #0x0000 (0)
+315 0x0255 // Operand #0x0000 (0)
 316 0x1800 // Variable BX
 317 0x039A // Operand #0x039A (922)
 318 0x2800 // PSET X
@@ -321,7 +321,7 @@ CLR
 326 0x2800 // PSET Color
 327 0x03A6 // Operand #0x03A6 (934)
 328 0x5000 // CALL __pset
-329 0x0321 // Operand #0x0000 (0)
+329 0x0255 // Operand #0x0000 (0)
 330 0x1800 // Variable LY
 331 0x03A0 // Operand #0x03A0 (928)
 332 0x2800 // LET OLD_LY = Accu
@@ -356,480 +356,302 @@ CLR
 362 0x3440 // A + VY
 364 0x2800 // LET BY = Accu
 365 0x039B // Operand #0x039B (923)
-366 0x1400 // Konstante 1
-367 0x0001 // Operand #0x0001 (1)
-368 0x2800 // Rechter Operand
-369 0x03B8 // Operand #0x03B8 (952)
-370 0x1800 // Variable BY
-371 0x039B // Operand #0x039B (923)
-372 0x2800 // Sichere A
-373 0x03B9 // Operand #0x03B9 (953)
-374 0x3540 // ~A
-376 0x3440 // -A
-377 0x0001 // Operand #0x0001 (1)
-378 0x2800 // Patch -A
-379 0x017F // Operand #0x017F (383)
-380 0x1800 // Lade B
-381 0x03B8 // Operand #0x03B8 (952)
-382 0x3440 // B - A
-384 0x4010 // Branch invertiert
-385 0x0186 // Operand #0x0000 (0)
-386 0x1400 // Ergebnis = 1 (True)
-387 0x0001 // Operand #0x0001 (1)
-388 0x4000 // Sprung zu Comp-Ende
-389 0x0188 // Operand #0x0000 (0)
-390 0x1400 // Ergebnis = 0 (False)
-392 0x4018 // IF False -> Skip
-393 0x018E // Operand #0x0000 (0)
-394 0x1400 // Konstante 1
-395 0x0001 // Operand #0x0001 (1)
-396 0x2800 // LET VY = Accu
-397 0x039F // Operand #0x039F (927)
-398 0x1400 // Konstante 30
-399 0x001E // Operand #0x001E (30)
-400 0x2800 // Rechter Operand
-401 0x03BA // Operand #0x03BA (954)
-402 0x1800 // Variable BY
-403 0x039B // Operand #0x039B (923)
-404 0x2800 // Sichere A
-405 0x03BB // Operand #0x03BB (955)
-406 0x1800 // Lade B
-407 0x03BA // Operand #0x03BA (954)
-408 0x3540 // ~B
-410 0x3440 // -B
-411 0x0001 // Operand #0x0001 (1)
-412 0x2800 // Patch -B
-413 0x01A1 // Operand #0x01A1 (417)
-414 0x1800 // Lade A
-415 0x03BB // Operand #0x03BB (955)
-416 0x3440 // A - B
-418 0x4010 // Branch invertiert
-419 0x01A8 // Operand #0x0000 (0)
-420 0x1400 // Ergebnis = 1 (True)
+366 0x1800 // Variable BY
+367 0x039B // Operand #0x039B (923)
+368 0x3540 // ~Left
+370 0x3440 // ~Left + 2 (1 - Left)
+371 0x0002 // Operand #0x0002 (2)
+372 0x4010 // IF False (<=) -> Skip
+373 0x017A // Operand #0x0000 (0)
+374 0x1400 // Konstante 1
+375 0x0001 // Operand #0x0001 (1)
+376 0x2800 // LET VY = Accu
+377 0x039F // Operand #0x039F (927)
+378 0x1800 // Variable BY
+379 0x039B // Operand #0x039B (923)
+380 0x3440 // Vergleich Accu - 30
+381 0xFFE2 // Operand #0xFFE2 (65506)
+382 0x4010 // IF False (>=) -> Skip
+383 0x0184 // Operand #0x0000 (0)
+384 0x1400 // Konstante -1
+385 0xFFFF // Operand #0xFFFF (65535)
+386 0x2800 // LET VY = Accu
+387 0x039F // Operand #0x039F (927)
+388 0x1800 // Variable BX
+389 0x039A // Operand #0x039A (922)
+390 0x3540 // ~Left
+392 0x3440 // ~Left + 3 (2 - Left)
+393 0x0003 // Operand #0x0003 (3)
+394 0x4010 // IF False (<=) -> Skip
+395 0x0190 // Operand #0x0000 (0)
+396 0x1400 // Konstante 1
+397 0x0001 // Operand #0x0001 (1)
+398 0x2800 // LET VX = Accu
+399 0x039E // Operand #0x039E (926)
+400 0x1800 // Variable BX
+401 0x039A // Operand #0x039A (922)
+402 0x3440 // Vergleich Accu - 29
+403 0xFFE3 // Operand #0xFFE3 (65507)
+404 0x4010 // IF False (>=) -> Skip
+405 0x019A // Operand #0x0000 (0)
+406 0x1400 // Konstante -1
+407 0xFFFF // Operand #0xFFFF (65535)
+408 0x2800 // LET VX = Accu
+409 0x039E // Operand #0x039E (926)
+410 0x1800 // Variable LY
+411 0x03A0 // Operand #0x03A0 (928)
+412 0x3440 // Accu + 1
+413 0x0001 // Operand #0x0001 (1)
+414 0x2800 // Rechter Vergleichsoperand
+415 0x03B8 // Operand #0x03B8 (952)
+416 0x1800 // Variable BY
+417 0x039B // Operand #0x039B (923)
+418 0x3540 // ~A
+420 0x3440 // -A
 421 0x0001 // Operand #0x0001 (1)
-422 0x4000 // Sprung zu Comp-Ende
-423 0x01AA // Operand #0x0000 (0)
-424 0x1400 // Ergebnis = 0 (False)
-426 0x4018 // IF False -> Skip
-427 0x01B4 // Operand #0x0000 (0)
-428 0x1400 // Konstante 1
-429 0x0001 // Operand #0x0001 (1)
-430 0x3540 // Negation: NOT
-432 0x3440 // Negation: + 1
-433 0x0001 // Operand #0x0001 (1)
-434 0x2800 // LET VY = Accu
-435 0x039F // Operand #0x039F (927)
-436 0x1400 // Konstante 2
-437 0x0002 // Operand #0x0002 (2)
-438 0x2800 // Rechter Operand
-439 0x03BC // Operand #0x03BC (956)
-440 0x1800 // Variable BX
-441 0x039A // Operand #0x039A (922)
-442 0x2800 // Sichere A
-443 0x03BD // Operand #0x03BD (957)
-444 0x3540 // ~A
-446 0x3440 // -A
-447 0x0001 // Operand #0x0001 (1)
-448 0x2800 // Patch -A
-449 0x01C5 // Operand #0x01C5 (453)
-450 0x1800 // Lade B
-451 0x03BC // Operand #0x03BC (956)
-452 0x3440 // B - A
-454 0x4010 // Branch invertiert
-455 0x01CC // Operand #0x0000 (0)
-456 0x1400 // Ergebnis = 1 (True)
-457 0x0001 // Operand #0x0001 (1)
-458 0x4000 // Sprung zu Comp-Ende
-459 0x01CE // Operand #0x0000 (0)
-460 0x1400 // Ergebnis = 0 (False)
-462 0x4018 // IF False -> Skip
-463 0x01D4 // Operand #0x0000 (0)
-464 0x1400 // Konstante 1
-465 0x0001 // Operand #0x0001 (1)
-466 0x2800 // LET VX = Accu
-467 0x039E // Operand #0x039E (926)
-468 0x1400 // Konstante 29
-469 0x001D // Operand #0x001D (29)
-470 0x2800 // Rechter Operand
-471 0x03BE // Operand #0x03BE (958)
-472 0x1800 // Variable BX
-473 0x039A // Operand #0x039A (922)
-474 0x2800 // Sichere A
-475 0x03BF // Operand #0x03BF (959)
-476 0x1800 // Lade B
-477 0x03BE // Operand #0x03BE (958)
-478 0x3540 // ~B
-480 0x3440 // -B
-481 0x0001 // Operand #0x0001 (1)
-482 0x2800 // Patch -B
-483 0x01E7 // Operand #0x01E7 (487)
-484 0x1800 // Lade A
-485 0x03BF // Operand #0x03BF (959)
-486 0x3440 // A - B
-488 0x4010 // Branch invertiert
-489 0x01EE // Operand #0x0000 (0)
-490 0x1400 // Ergebnis = 1 (True)
+422 0x2800 // Patch -A
+423 0x01AB // Operand #0x01AB (427)
+424 0x1800 // Lade B
+425 0x03B8 // Operand #0x03B8 (952)
+426 0x3440 // B - A
+428 0x4010 // IF True (>) -> Then
+429 0x01B0 // Operand #0x0000 (0)
+430 0x4000 // IF False -> Skip
+431 0x01BE // Operand #0x0000 (0)
+432 0x1800 // Variable LY
+433 0x03A0 // Operand #0x03A0 (928)
+434 0x3440 // Vergleich Accu - 27
+435 0xFFE5 // Operand #0xFFE5 (65509)
+436 0x4010 // IF True (<) -> Then
+437 0x01B8 // Operand #0x0000 (0)
+438 0x4000 // IF False -> Skip
+439 0x01BE // Operand #0x0000 (0)
+440 0x1800 // Variable LY
+441 0x03A0 // Operand #0x03A0 (928)
+442 0x3440 // Accu + 1
+443 0x0001 // Operand #0x0001 (1)
+444 0x2800 // LET LY = Accu
+445 0x03A0 // Operand #0x03A0 (928)
+446 0x1800 // Variable LY
+447 0x03A0 // Operand #0x03A0 (928)
+448 0x3440 // Accu + 1
+449 0x0001 // Operand #0x0001 (1)
+450 0x2800 // Rechter Vergleichsoperand
+451 0x03B9 // Operand #0x03B9 (953)
+452 0x1800 // Variable BY
+453 0x039B // Operand #0x039B (923)
+454 0x2800 // Sichere A
+455 0x03BA // Operand #0x03BA (954)
+456 0x1800 // Lade B
+457 0x03B9 // Operand #0x03B9 (953)
+458 0x3540 // ~B
+460 0x3440 // -B
+461 0x0001 // Operand #0x0001 (1)
+462 0x2800 // Patch -B
+463 0x01D3 // Operand #0x01D3 (467)
+464 0x1800 // Lade A
+465 0x03BA // Operand #0x03BA (954)
+466 0x3440 // A - B
+468 0x4010 // IF True (<) -> Then
+469 0x01D8 // Operand #0x0000 (0)
+470 0x4000 // IF False -> Skip
+471 0x01E8 // Operand #0x0000 (0)
+472 0x1800 // Variable LY
+473 0x03A0 // Operand #0x03A0 (928)
+474 0x3540 // ~Left
+476 0x3440 // ~Left + 2 (1 - Left)
+477 0x0002 // Operand #0x0002 (2)
+478 0x4010 // IF True (>) -> Then
+479 0x01E2 // Operand #0x0000 (0)
+480 0x4000 // IF False -> Skip
+481 0x01E8 // Operand #0x0000 (0)
+482 0x1800 // Variable LY
+483 0x03A0 // Operand #0x03A0 (928)
+484 0x3440 // Accu - 1
+485 0xFFFF // Operand #0xFFFF (65535)
+486 0x2800 // LET LY = Accu
+487 0x03A0 // Operand #0x03A0 (928)
+488 0x1800 // Variable RY
+489 0x03A1 // Operand #0x03A1 (929)
+490 0x3440 // Accu + 1
 491 0x0001 // Operand #0x0001 (1)
-492 0x4000 // Sprung zu Comp-Ende
-493 0x01F0 // Operand #0x0000 (0)
-494 0x1400 // Ergebnis = 0 (False)
-496 0x4018 // IF False -> Skip
-497 0x01FA // Operand #0x0000 (0)
-498 0x1400 // Konstante 1
+492 0x2800 // Rechter Vergleichsoperand
+493 0x03BB // Operand #0x03BB (955)
+494 0x1800 // Variable BY
+495 0x039B // Operand #0x039B (923)
+496 0x3540 // ~A
+498 0x3440 // -A
 499 0x0001 // Operand #0x0001 (1)
-500 0x3540 // Negation: NOT
-502 0x3440 // Negation: + 1
-503 0x0001 // Operand #0x0001 (1)
-504 0x2800 // LET VX = Accu
-505 0x039E // Operand #0x039E (926)
-506 0x1800 // Variable LY
-507 0x03A0 // Operand #0x03A0 (928)
-508 0x3440 // Accu + 1
-509 0x0001 // Operand #0x0001 (1)
-510 0x2800 // Rechter Operand
-511 0x03B8 // Operand #0x03B8 (952)
-512 0x1800 // Variable BY
-513 0x039B // Operand #0x039B (923)
-514 0x2800 // Sichere A
-515 0x03B9 // Operand #0x03B9 (953)
-516 0x3540 // ~A
-518 0x3440 // -A
-519 0x0001 // Operand #0x0001 (1)
-520 0x2800 // Patch -A
-521 0x020D // Operand #0x020D (525)
-522 0x1800 // Lade B
-523 0x03B8 // Operand #0x03B8 (952)
-524 0x3440 // B - A
-526 0x4010 // Branch Bedingung erfuellt
-527 0x0214 // Operand #0x0000 (0)
-528 0x1400 // Ergebnis = 0 (False)
-530 0x4000 // Sprung zu Comp-Ende
-531 0x0216 // Operand #0x0000 (0)
-532 0x1400 // Ergebnis = 1 (True)
-533 0x0001 // Operand #0x0001 (1)
-534 0x4018 // IF False -> Skip
-535 0x023C // Operand #0x0000 (0)
-536 0x1400 // Konstante 27
-537 0x001B // Operand #0x001B (27)
-538 0x2800 // Rechter Operand
-539 0x03BA // Operand #0x03BA (954)
-540 0x1800 // Variable LY
-541 0x03A0 // Operand #0x03A0 (928)
-542 0x2800 // Sichere A
-543 0x03BB // Operand #0x03BB (955)
-544 0x1800 // Lade B
-545 0x03BA // Operand #0x03BA (954)
-546 0x3540 // ~B
-548 0x3440 // -B
-549 0x0001 // Operand #0x0001 (1)
-550 0x2800 // Patch -B
-551 0x022B // Operand #0x022B (555)
-552 0x1800 // Lade A
-553 0x03BB // Operand #0x03BB (955)
-554 0x3440 // A - B
-556 0x4010 // Branch Bedingung erfuellt
-557 0x0232 // Operand #0x0000 (0)
-558 0x1400 // Ergebnis = 0 (False)
-560 0x4000 // Sprung zu Comp-Ende
-561 0x0234 // Operand #0x0000 (0)
-562 0x1400 // Ergebnis = 1 (True)
-563 0x0001 // Operand #0x0001 (1)
-564 0x4018 // IF False -> Skip
-565 0x023C // Operand #0x0000 (0)
-566 0x1800 // Variable LY
-567 0x03A0 // Operand #0x03A0 (928)
-568 0x3440 // Accu + 1
-569 0x0001 // Operand #0x0001 (1)
-570 0x2800 // LET LY = Accu
-571 0x03A0 // Operand #0x03A0 (928)
-572 0x1800 // Variable LY
-573 0x03A0 // Operand #0x03A0 (928)
-574 0x3440 // Accu + 1
-575 0x0001 // Operand #0x0001 (1)
-576 0x2800 // Rechter Operand
-577 0x03BC // Operand #0x03BC (956)
-578 0x1800 // Variable BY
-579 0x039B // Operand #0x039B (923)
-580 0x2800 // Sichere A
-581 0x03BD // Operand #0x03BD (957)
-582 0x1800 // Lade B
-583 0x03BC // Operand #0x03BC (956)
-584 0x3540 // ~B
-586 0x3440 // -B
-587 0x0001 // Operand #0x0001 (1)
-588 0x2800 // Patch -B
-589 0x0251 // Operand #0x0251 (593)
-590 0x1800 // Lade A
-591 0x03BD // Operand #0x03BD (957)
-592 0x3440 // A - B
-594 0x4010 // Branch Bedingung erfuellt
-595 0x0258 // Operand #0x0000 (0)
-596 0x1400 // Ergebnis = 0 (False)
-598 0x4000 // Sprung zu Comp-Ende
-599 0x025A // Operand #0x0000 (0)
-600 0x1400 // Ergebnis = 1 (True)
-601 0x0001 // Operand #0x0001 (1)
-602 0x4018 // IF False -> Skip
-603 0x027E // Operand #0x0000 (0)
-604 0x1400 // Konstante 1
-605 0x0001 // Operand #0x0001 (1)
-606 0x2800 // Rechter Operand
-607 0x03BE // Operand #0x03BE (958)
-608 0x1800 // Variable LY
-609 0x03A0 // Operand #0x03A0 (928)
-610 0x2800 // Sichere A
-611 0x03BF // Operand #0x03BF (959)
-612 0x3540 // ~A
-614 0x3440 // -A
-615 0x0001 // Operand #0x0001 (1)
-616 0x2800 // Patch -A
-617 0x026D // Operand #0x026D (621)
-618 0x1800 // Lade B
-619 0x03BE // Operand #0x03BE (958)
-620 0x3440 // B - A
-622 0x4010 // Branch Bedingung erfuellt
-623 0x0274 // Operand #0x0000 (0)
-624 0x1400 // Ergebnis = 0 (False)
-626 0x4000 // Sprung zu Comp-Ende
-627 0x0276 // Operand #0x0000 (0)
-628 0x1400 // Ergebnis = 1 (True)
-629 0x0001 // Operand #0x0001 (1)
-630 0x4018 // IF False -> Skip
-631 0x027E // Operand #0x0000 (0)
-632 0x1800 // Variable LY
-633 0x03A0 // Operand #0x03A0 (928)
-634 0x3440 // Accu - 1
-635 0xFFFF // Operand #0xFFFF (65535)
-636 0x2800 // LET LY = Accu
-637 0x03A0 // Operand #0x03A0 (928)
-638 0x1800 // Variable RY
-639 0x03A1 // Operand #0x03A1 (929)
-640 0x3440 // Accu + 1
-641 0x0001 // Operand #0x0001 (1)
-642 0x2800 // Rechter Operand
-643 0x03B8 // Operand #0x03B8 (952)
-644 0x1800 // Variable BY
-645 0x039B // Operand #0x039B (923)
-646 0x2800 // Sichere A
-647 0x03B9 // Operand #0x03B9 (953)
-648 0x3540 // ~A
-650 0x3440 // -A
-651 0x0001 // Operand #0x0001 (1)
-652 0x2800 // Patch -A
-653 0x0291 // Operand #0x0291 (657)
-654 0x1800 // Lade B
-655 0x03B8 // Operand #0x03B8 (952)
-656 0x3440 // B - A
-658 0x4010 // Branch Bedingung erfuellt
-659 0x0298 // Operand #0x0000 (0)
-660 0x1400 // Ergebnis = 0 (False)
-662 0x4000 // Sprung zu Comp-Ende
-663 0x029A // Operand #0x0000 (0)
-664 0x1400 // Ergebnis = 1 (True)
-665 0x0001 // Operand #0x0001 (1)
-666 0x4018 // IF False -> Skip
-667 0x02C0 // Operand #0x0000 (0)
-668 0x1400 // Konstante 27
-669 0x001B // Operand #0x001B (27)
-670 0x2800 // Rechter Operand
-671 0x03BA // Operand #0x03BA (954)
-672 0x1800 // Variable RY
-673 0x03A1 // Operand #0x03A1 (929)
-674 0x2800 // Sichere A
-675 0x03BB // Operand #0x03BB (955)
-676 0x1800 // Lade B
-677 0x03BA // Operand #0x03BA (954)
-678 0x3540 // ~B
-680 0x3440 // -B
-681 0x0001 // Operand #0x0001 (1)
-682 0x2800 // Patch -B
-683 0x02AF // Operand #0x02AF (687)
-684 0x1800 // Lade A
-685 0x03BB // Operand #0x03BB (955)
-686 0x3440 // A - B
-688 0x4010 // Branch Bedingung erfuellt
-689 0x02B6 // Operand #0x0000 (0)
-690 0x1400 // Ergebnis = 0 (False)
-692 0x4000 // Sprung zu Comp-Ende
-693 0x02B8 // Operand #0x0000 (0)
-694 0x1400 // Ergebnis = 1 (True)
-695 0x0001 // Operand #0x0001 (1)
-696 0x4018 // IF False -> Skip
-697 0x02C0 // Operand #0x0000 (0)
-698 0x1800 // Variable RY
-699 0x03A1 // Operand #0x03A1 (929)
-700 0x3440 // Accu + 1
-701 0x0001 // Operand #0x0001 (1)
-702 0x2800 // LET RY = Accu
-703 0x03A1 // Operand #0x03A1 (929)
-704 0x1800 // Variable RY
-705 0x03A1 // Operand #0x03A1 (929)
-706 0x3440 // Accu + 1
-707 0x0001 // Operand #0x0001 (1)
-708 0x2800 // Rechter Operand
-709 0x03BC // Operand #0x03BC (956)
-710 0x1800 // Variable BY
-711 0x039B // Operand #0x039B (923)
-712 0x2800 // Sichere A
-713 0x03BD // Operand #0x03BD (957)
-714 0x1800 // Lade B
-715 0x03BC // Operand #0x03BC (956)
-716 0x3540 // ~B
-718 0x3440 // -B
-719 0x0001 // Operand #0x0001 (1)
-720 0x2800 // Patch -B
-721 0x02D5 // Operand #0x02D5 (725)
-722 0x1800 // Lade A
-723 0x03BD // Operand #0x03BD (957)
-724 0x3440 // A - B
-726 0x4010 // Branch Bedingung erfuellt
-727 0x02DC // Operand #0x0000 (0)
-728 0x1400 // Ergebnis = 0 (False)
-730 0x4000 // Sprung zu Comp-Ende
-731 0x02DE // Operand #0x0000 (0)
-732 0x1400 // Ergebnis = 1 (True)
-733 0x0001 // Operand #0x0001 (1)
-734 0x4018 // IF False -> Skip
-735 0x0302 // Operand #0x0000 (0)
-736 0x1400 // Konstante 1
-737 0x0001 // Operand #0x0001 (1)
-738 0x2800 // Rechter Operand
-739 0x03BE // Operand #0x03BE (958)
-740 0x1800 // Variable RY
-741 0x03A1 // Operand #0x03A1 (929)
-742 0x2800 // Sichere A
-743 0x03BF // Operand #0x03BF (959)
-744 0x3540 // ~A
-746 0x3440 // -A
-747 0x0001 // Operand #0x0001 (1)
-748 0x2800 // Patch -A
-749 0x02F1 // Operand #0x02F1 (753)
-750 0x1800 // Lade B
-751 0x03BE // Operand #0x03BE (958)
-752 0x3440 // B - A
-754 0x4010 // Branch Bedingung erfuellt
-755 0x02F8 // Operand #0x0000 (0)
-756 0x1400 // Ergebnis = 0 (False)
-758 0x4000 // Sprung zu Comp-Ende
-759 0x02FA // Operand #0x0000 (0)
-760 0x1400 // Ergebnis = 1 (True)
-761 0x0001 // Operand #0x0001 (1)
-762 0x4018 // IF False -> Skip
-763 0x0302 // Operand #0x0000 (0)
-764 0x1800 // Variable RY
-765 0x03A1 // Operand #0x03A1 (929)
-766 0x3440 // Accu - 1
-767 0xFFFF // Operand #0xFFFF (65535)
-768 0x2800 // LET RY = Accu
-769 0x03A1 // Operand #0x03A1 (929)
-770 0x4000 // GOTO GAME_LOOP
-771 0x0036 // Operand #0x0000 (0)
-772 0x4000 // Ende des Programms (Halt-Schleife)
-773 0x0304 // Operand #0x0304 (772)
-774 0x1400 // Pixeldaten = 0
-776 0x2C00 // Schreibe in Display via STAMM
-777 0x0398 // Operand #0x0398 (920)
-778 0x1800 // Zeiger inkrementieren
-779 0x0398 // Operand #0x0398 (920)
-780 0x3440 // ptr++
-781 0x0001 // Operand #0x0001 (1)
-782 0x2800 // Speichere ptr
-783 0x0398 // Operand #0x0398 (920)
-784 0x1800 // Lade endCls
-785 0x0399 // Operand #0x0399 (921)
-786 0x3540 // ~endCls
-788 0x3440 // ~endCls + 1
-789 0x0001 // Operand #0x0001 (1)
-790 0x2800 // Patch Endvergleich
-791 0x031B // Operand #0x031B (795)
-792 0x1800 // Lade ptr
-793 0x0398 // Operand #0x0398 (920)
-794 0x3440 // ptr - endCls
-796 0x4018 // __cls: Fertig bei endCls
-797 0x0320 // Operand #0x0000 (0)
-798 0x4000 // Loop __cls
-799 0x0306 // Operand #0x0306 (774)
-800 0x6000 // RETURN __cls
-801 0x1800 // __pset: Lade Y
-802 0x03A5 // Operand #0x03A5 (933)
-803 0x35C0 // Y * 2
-805 0x3440 // Base + Y*2 + 1 (Default Word 1)
-806 0x03C1 // Operand #0x03C1 (961)
-807 0x2800 // Speichere wordAddr
-808 0x03A7 // Operand #0x03A7 (935)
-809 0x1800 // Lade X
-810 0x03A4 // Operand #0x03A4 (932)
-811 0x3480 // X >= 16 ?
-812 0x0010 // Operand #0x0010 (16)
-813 0x4018 // Wenn X < 16 -> Word 1 bereit
-814 0x0335 // Operand #0x0000 (0)
-815 0x1800 // Lade wordAddr
-816 0x03A7 // Operand #0x03A7 (935)
-817 0x3440 // wordAddr - 1 -> Word 0
-818 0xFFFF // Operand #0xFFFF (65535)
-819 0x2800 // Speichere Word 0
-820 0x03A7 // Operand #0x03A7 (935)
-821 0x1800 // Lade X
-822 0x03A4 // Operand #0x03A4 (932)
-823 0x3480 // X & 15 (Bit-Index)
-824 0x000F // Operand #0x000F (15)
-825 0x3440 // Addiere Tabellenbasis
-826 0x0366 // Operand #0x0000 (0)
-827 0x2800 // Speichere Zeiger auf Maske
-828 0x03AA // Operand #0x03AA (938)
-829 0x1C00 // Lade Maske via LDAMM
-830 0x03AA // Operand #0x03AA (938)
-831 0x2800 // Speichere Maske
-832 0x03A8 // Operand #0x03A8 (936)
-833 0x1C00 // Lade aktuellen Wortwert via LDAMM
-834 0x03A7 // Operand #0x03A7 (935)
-835 0x2800 // Speichere currWord
-836 0x03A9 // Operand #0x03A9 (937)
-837 0x1800 // Lade Color
-838 0x03A6 // Operand #0x03A6 (934)
-839 0x4018 // Wenn Color == 0 -> Clear Pixel
-840 0x0355 // Operand #0x0000 (0)
-841 0x1800 // Lade Maske
-842 0x03A8 // Operand #0x03A8 (936)
-843 0x2800 // Patch OR-Operand
-844 0x0350 // Operand #0x0350 (848)
-845 0x1800 // Lade currWord
-846 0x03A9 // Operand #0x03A9 (937)
-847 0x34C0 // currWord | mask
-849 0x2800 // Speichere neues currWord
-850 0x03A9 // Operand #0x03A9 (937)
-851 0x4000 // Sprung zu Write
-852 0x0361 // Operand #0x0000 (0)
-853 0x1800 // Lade Maske
-854 0x03A8 // Operand #0x03A8 (936)
-855 0x3540 // ~mask (invertiert)
-857 0x2800 // Patch AND-Operand
-858 0x035E // Operand #0x035E (862)
-859 0x1800 // Lade currWord
-860 0x03A9 // Operand #0x03A9 (937)
-861 0x3480 // currWord & ~mask
-863 0x2800 // Speichere neues currWord
-864 0x03A9 // Operand #0x03A9 (937)
-865 0x1800 // Lade geändertes Wort
-866 0x03A9 // Operand #0x03A9 (937)
-867 0x2C00 // Schreibe Pixelwort in Display via STAMM
-868 0x03A7 // Operand #0x03A7 (935)
-869 0x6000 // RETURN __pset
-870 0x8000 // Maske fuer Bit 15
-871 0x4000 // Maske fuer Bit 14
-872 0x2000 // Maske fuer Bit 13
-873 0x1000 // Maske fuer Bit 12
-874 0x0800 // Maske fuer Bit 11
-875 0x0400 // Maske fuer Bit 10
-876 0x0200 // Maske fuer Bit 9
-877 0x0100 // Maske fuer Bit 8
-878 0x0080 // Maske fuer Bit 7
-879 0x0040 // Maske fuer Bit 6
-880 0x0020 // Maske fuer Bit 5
-881 0x0010 // Maske fuer Bit 4
-882 0x0008 // Maske fuer Bit 3
-883 0x0004 // Maske fuer Bit 2
-884 0x0002 // Maske fuer Bit 1
-885 0x0001 // Maske fuer Bit 0
+500 0x2800 // Patch -A
+501 0x01F9 // Operand #0x01F9 (505)
+502 0x1800 // Lade B
+503 0x03BB // Operand #0x03BB (955)
+504 0x3440 // B - A
+506 0x4010 // IF True (>) -> Then
+507 0x01FE // Operand #0x0000 (0)
+508 0x4000 // IF False -> Skip
+509 0x020C // Operand #0x0000 (0)
+510 0x1800 // Variable RY
+511 0x03A1 // Operand #0x03A1 (929)
+512 0x3440 // Vergleich Accu - 27
+513 0xFFE5 // Operand #0xFFE5 (65509)
+514 0x4010 // IF True (<) -> Then
+515 0x0206 // Operand #0x0000 (0)
+516 0x4000 // IF False -> Skip
+517 0x020C // Operand #0x0000 (0)
+518 0x1800 // Variable RY
+519 0x03A1 // Operand #0x03A1 (929)
+520 0x3440 // Accu + 1
+521 0x0001 // Operand #0x0001 (1)
+522 0x2800 // LET RY = Accu
+523 0x03A1 // Operand #0x03A1 (929)
+524 0x1800 // Variable RY
+525 0x03A1 // Operand #0x03A1 (929)
+526 0x3440 // Accu + 1
+527 0x0001 // Operand #0x0001 (1)
+528 0x2800 // Rechter Vergleichsoperand
+529 0x03BC // Operand #0x03BC (956)
+530 0x1800 // Variable BY
+531 0x039B // Operand #0x039B (923)
+532 0x2800 // Sichere A
+533 0x03BD // Operand #0x03BD (957)
+534 0x1800 // Lade B
+535 0x03BC // Operand #0x03BC (956)
+536 0x3540 // ~B
+538 0x3440 // -B
+539 0x0001 // Operand #0x0001 (1)
+540 0x2800 // Patch -B
+541 0x0221 // Operand #0x0221 (545)
+542 0x1800 // Lade A
+543 0x03BD // Operand #0x03BD (957)
+544 0x3440 // A - B
+546 0x4010 // IF True (<) -> Then
+547 0x0226 // Operand #0x0000 (0)
+548 0x4000 // IF False -> Skip
+549 0x0236 // Operand #0x0000 (0)
+550 0x1800 // Variable RY
+551 0x03A1 // Operand #0x03A1 (929)
+552 0x3540 // ~Left
+554 0x3440 // ~Left + 2 (1 - Left)
+555 0x0002 // Operand #0x0002 (2)
+556 0x4010 // IF True (>) -> Then
+557 0x0230 // Operand #0x0000 (0)
+558 0x4000 // IF False -> Skip
+559 0x0236 // Operand #0x0000 (0)
+560 0x1800 // Variable RY
+561 0x03A1 // Operand #0x03A1 (929)
+562 0x3440 // Accu - 1
+563 0xFFFF // Operand #0xFFFF (65535)
+564 0x2800 // LET RY = Accu
+565 0x03A1 // Operand #0x03A1 (929)
+566 0x4000 // GOTO GAME_LOOP
+567 0x0036 // Operand #0x0000 (0)
+568 0x4000 // Ende des Programms (Halt-Schleife)
+569 0x0238 // Operand #0x0238 (568)
+570 0x1400 // Pixeldaten = 0
+572 0x2C00 // Schreibe in Display via STAMM
+573 0x0398 // Operand #0x0398 (920)
+574 0x1800 // Zeiger inkrementieren
+575 0x0398 // Operand #0x0398 (920)
+576 0x3440 // ptr++
+577 0x0001 // Operand #0x0001 (1)
+578 0x2800 // Speichere ptr
+579 0x0398 // Operand #0x0398 (920)
+580 0x1800 // Lade endCls
+581 0x0399 // Operand #0x0399 (921)
+582 0x3540 // ~endCls
+584 0x3440 // ~endCls + 1
+585 0x0001 // Operand #0x0001 (1)
+586 0x2800 // Patch Endvergleich
+587 0x024F // Operand #0x024F (591)
+588 0x1800 // Lade ptr
+589 0x0398 // Operand #0x0398 (920)
+590 0x3440 // ptr - endCls
+592 0x4018 // __cls: Fertig bei endCls
+593 0x0254 // Operand #0x0000 (0)
+594 0x4000 // Loop __cls
+595 0x023A // Operand #0x023A (570)
+596 0x6000 // RETURN __cls
+597 0x1800 // __pset: Lade Y
+598 0x03A5 // Operand #0x03A5 (933)
+599 0x35C0 // Y * 2
+601 0x3440 // Base + Y*2 + 1 (Default Word 1)
+602 0x03C1 // Operand #0x03C1 (961)
+603 0x2800 // Speichere wordAddr
+604 0x03A7 // Operand #0x03A7 (935)
+605 0x1800 // Lade X
+606 0x03A4 // Operand #0x03A4 (932)
+607 0x3480 // X >= 16 ?
+608 0x0010 // Operand #0x0010 (16)
+609 0x4018 // Wenn X < 16 -> Word 1 bereit
+610 0x0269 // Operand #0x0000 (0)
+611 0x1800 // Lade wordAddr
+612 0x03A7 // Operand #0x03A7 (935)
+613 0x3440 // wordAddr - 1 -> Word 0
+614 0xFFFF // Operand #0xFFFF (65535)
+615 0x2800 // Speichere Word 0
+616 0x03A7 // Operand #0x03A7 (935)
+617 0x1800 // Lade X
+618 0x03A4 // Operand #0x03A4 (932)
+619 0x3480 // X & 15 (Bit-Index)
+620 0x000F // Operand #0x000F (15)
+621 0x3440 // Addiere Tabellenbasis
+622 0x029A // Operand #0x0000 (0)
+623 0x2800 // Speichere Zeiger auf Maske
+624 0x03AA // Operand #0x03AA (938)
+625 0x1C00 // Lade Maske via LDAMM
+626 0x03AA // Operand #0x03AA (938)
+627 0x2800 // Speichere Maske
+628 0x03A8 // Operand #0x03A8 (936)
+629 0x1C00 // Lade aktuellen Wortwert via LDAMM
+630 0x03A7 // Operand #0x03A7 (935)
+631 0x2800 // Speichere currWord
+632 0x03A9 // Operand #0x03A9 (937)
+633 0x1800 // Lade Color
+634 0x03A6 // Operand #0x03A6 (934)
+635 0x4018 // Wenn Color == 0 -> Clear Pixel
+636 0x0289 // Operand #0x0000 (0)
+637 0x1800 // Lade Maske
+638 0x03A8 // Operand #0x03A8 (936)
+639 0x2800 // Patch OR-Operand
+640 0x0284 // Operand #0x0284 (644)
+641 0x1800 // Lade currWord
+642 0x03A9 // Operand #0x03A9 (937)
+643 0x34C0 // currWord | mask
+645 0x2800 // Speichere neues currWord
+646 0x03A9 // Operand #0x03A9 (937)
+647 0x4000 // Sprung zu Write
+648 0x0295 // Operand #0x0000 (0)
+649 0x1800 // Lade Maske
+650 0x03A8 // Operand #0x03A8 (936)
+651 0x3540 // ~mask (invertiert)
+653 0x2800 // Patch AND-Operand
+654 0x0292 // Operand #0x0292 (658)
+655 0x1800 // Lade currWord
+656 0x03A9 // Operand #0x03A9 (937)
+657 0x3480 // currWord & ~mask
+659 0x2800 // Speichere neues currWord
+660 0x03A9 // Operand #0x03A9 (937)
+661 0x1800 // Lade geändertes Wort
+662 0x03A9 // Operand #0x03A9 (937)
+663 0x2C00 // Schreibe Pixelwort in Display via STAMM
+664 0x03A7 // Operand #0x03A7 (935)
+665 0x6000 // RETURN __pset
+666 0x8000 // Maske fuer Bit 15
+667 0x4000 // Maske fuer Bit 14
+668 0x2000 // Maske fuer Bit 13
+669 0x1000 // Maske fuer Bit 12
+670 0x0800 // Maske fuer Bit 11
+671 0x0400 // Maske fuer Bit 10
+672 0x0200 // Maske fuer Bit 9
+673 0x0100 // Maske fuer Bit 8
+674 0x0080 // Maske fuer Bit 7
+675 0x0040 // Maske fuer Bit 6
+676 0x0020 // Maske fuer Bit 5
+677 0x0010 // Maske fuer Bit 4
+678 0x0008 // Maske fuer Bit 3
+679 0x0004 // Maske fuer Bit 2
+680 0x0002 // Maske fuer Bit 1
+681 0x0001 // Maske fuer Bit 0
 
 RUN

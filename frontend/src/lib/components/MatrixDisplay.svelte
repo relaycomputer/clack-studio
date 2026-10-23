@@ -84,6 +84,8 @@
     return { on: '#ffc433', glow: 'rgba(255, 176, 0, 0.6)', off: '#161100' };
   }
 
+  const TAU = Math.PI * 2;
+
   function render() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -91,7 +93,8 @@
     const h = canvas.height;
     const res = settings.matrixResolution;
     const dotSize = w / res;
-    const radius = Math.max(1, (dotSize / 2) * 0.82);
+    const halfDot = dotSize / 2;
+    const radius = Math.max(1, halfDot * 0.82);
 
     ctx.fillStyle = '#05070a';
     ctx.fillRect(0, 0, w, h);
@@ -100,39 +103,46 @@
     const themeCols = getThemeColors();
     const palette = getPalette(settings.matrixColorMode);
     const is4Bit = settings.matrixMode === '4bit';
+    const mem = cpu.memory;
+
+    const offPath = new Path2D();
+    const onMonoPath = !palette ? new Path2D() : null;
+    const colorPaths = palette ? new Array(16) : null;
 
     if (is4Bit) {
       // 4-Bit Nibble Mode: 4 Pixels per 16-bit word (16 Colors)
-      const wordsPerRow = res / 4;
+      const wordsPerRow = res >> 2;
       const baseAddr = 768;
 
       for (let y = 0; y < res; y++) {
+        const cy = y * dotSize + halfDot;
+        const rowBase = baseAddr + (y * wordsPerRow);
         for (let wo = 0; wo < wordsPerRow; wo++) {
-          const addr = baseAddr + (y * wordsPerRow) + wo;
-          const word = (addr < cpu.memory.length) ? cpu.memory[addr] : 0;
+          const addr = rowBase + wo;
+          const word = (addr < mem.length) ? mem[addr] : 0;
 
           for (let p = 0; p < 4; p++) {
-            const x = (wo * 4) + p;
+            const x = (wo << 2) + p;
             if (x >= res) break;
 
-            const shift = (3 - p) * 4;
+            const shift = (3 - p) << 2;
             const colorIdx = (word >> shift) & 0x0F;
-
-            const cx = x * dotSize + dotSize / 2;
-            const cy = y * dotSize + dotSize / 2;
+            const cx = x * dotSize + halfDot;
 
             if (colorIdx > 0) {
               litCount++;
-              const color = palette ? palette[colorIdx] : themeCols.on;
-              ctx.fillStyle = color;
-              ctx.beginPath();
-              ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-              ctx.fill();
+              if (palette) {
+                let cp = colorPaths[colorIdx];
+                if (!cp) cp = colorPaths[colorIdx] = new Path2D();
+                cp.moveTo(cx + radius, cy);
+                cp.arc(cx, cy, radius, 0, TAU);
+              } else {
+                onMonoPath.moveTo(cx + radius, cy);
+                onMonoPath.arc(cx, cy, radius, 0, TAU);
+              }
             } else {
-              ctx.fillStyle = themeCols.off;
-              ctx.beginPath();
-              ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-              ctx.fill();
+              offPath.moveTo(cx + radius, cy);
+              offPath.arc(cx, cy, radius, 0, TAU);
             }
           }
         }
@@ -141,54 +151,64 @@
       // 1-Bit Mode: 16 Pixels per word (Standard Framebuffer)
       const baseAddr = (res === 64) ? FRAMEBUFFER_64_START : FRAMEBUFFER_32_START;
       const wordsPerRow = (res === 64) ? 4 : 2;
+      const isHw32 = (res === 32) && (settings.matrixLayout === 'hardware');
+      const halfRes = res / 2;
+      const maxDist = res * 0.7;
 
       for (let y = 0; y < res; y++) {
+        const cy = y * dotSize + halfDot;
+        const dy = y - halfRes;
+        const dy2 = dy * dy;
+        const rowBase = baseAddr + (y * wordsPerRow);
+
         for (let wo = 0; wo < wordsPerRow; wo++) {
-          const addr = baseAddr + (y * wordsPerRow) + wo;
-          const word = (addr < cpu.memory.length) ? cpu.memory[addr] : 0;
+          const addr = rowBase + wo;
+          const word = (addr < mem.length) ? mem[addr] : 0;
+          const colBase = (isHw32 ? (1 - wo) : wo) << 4;
 
           for (let bit = 15; bit >= 0; bit--) {
-            // Hardware 32x32: Word 0 (wo=0, addr 960) ist rechte Hälfte (X=16..31), Word 1 (wo=1, addr 961) ist linke Hälfte (X=0..15)
-            // Linear 32x32: Word 0 ist linke Hälfte, Word 1 ist rechte Hälfte
-            let x;
-            if (res === 32) {
-              const isHw = settings.matrixLayout === 'hardware';
-              const colWord = isHw ? (1 - wo) : wo;
-              x = (colWord * 16) + (15 - bit);
-            } else {
-              x = (wo * 16) + (15 - bit);
-            }
+            const x = colBase + (15 - bit);
             if (x >= res) break;
 
-            const isSet = (word >> bit) & 1;
-            const cx = x * dotSize + dotSize / 2;
-            const cy = y * dotSize + dotSize / 2;
+            const cx = x * dotSize + halfDot;
 
-            if (isSet) {
+            if ((word >> bit) & 1) {
               litCount++;
-              let color = themeCols.on;
-
               if (palette) {
-                // Multi-Color Fractal / Heatmap Gradient based on distance & position
-                const dist = Math.sqrt(Math.pow(x - res / 2, 2) + Math.pow(y - res / 2, 2));
-                const maxDist = res * 0.7;
+                const dx = x - halfRes;
+                const dist = Math.sqrt(dx * dx + dy2);
                 const idx = Math.min(15, Math.max(1, Math.floor((dist / maxDist) * 15)));
-                color = palette[idx];
+                let cp = colorPaths[idx];
+                if (!cp) cp = colorPaths[idx] = new Path2D();
+                cp.moveTo(cx + radius, cy);
+                cp.arc(cx, cy, radius, 0, TAU);
+              } else {
+                onMonoPath.moveTo(cx + radius, cy);
+                onMonoPath.arc(cx, cy, radius, 0, TAU);
               }
-
-              ctx.fillStyle = color;
-              ctx.beginPath();
-              ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-              ctx.fill();
             } else {
-              ctx.fillStyle = themeCols.off;
-              ctx.beginPath();
-              ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-              ctx.fill();
+              offPath.moveTo(cx + radius, cy);
+              offPath.arc(cx, cy, radius, 0, TAU);
             }
           }
         }
       }
+    }
+
+    // Batch-Draw: 1x Fill für alle inaktiven LEDs + 1..15x Fill für aktive LEDs (statt 4096 Einzel-Drawcalls!)
+    ctx.fillStyle = themeCols.off;
+    ctx.fill(offPath);
+
+    if (palette) {
+      for (let idx = 1; idx < 16; idx++) {
+        if (colorPaths[idx]) {
+          ctx.fillStyle = palette[idx];
+          ctx.fill(colorPaths[idx]);
+        }
+      }
+    } else if (litCount > 0) {
+      ctx.fillStyle = themeCols.on;
+      ctx.fill(onMonoPath);
     }
 
     activePixels = litCount;
