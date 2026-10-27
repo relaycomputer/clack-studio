@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -105,12 +106,42 @@ func main() {
 	mux.HandleFunc("/api/run", srv.handleRun)
 	mux.HandleFunc("/api/reset", srv.handleReset)
 
-	// Static Web Frontend (Svelte 5 + Vite Build)
+	// Static Web Frontend (Svelte 5 + Vite Build) with SPA fallback & path redirects
 	subFS, err := fs.Sub(webFS, "frontend/dist")
 	if err != nil {
 		log.Fatalf("Failed to initialize web filesystem: %v", err)
 	}
-	mux.Handle("/", http.FileServer(http.FS(subFS)))
+	fileServer := http.FileServer(http.FS(subFS))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		cleanPath := strings.Trim(r.URL.Path, "/")
+		if cleanPath == "" {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// Language sub-paths or SPA routing paths: redirect to root
+		if cleanPath == "en" || cleanPath == "de" || cleanPath == "studio" || cleanPath == "basic" || cleanPath == "asm" {
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			return
+		}
+
+		// Check if file exists in embedded filesystem
+		f, err := subFS.Open(cleanPath)
+		if err == nil {
+			f.Close()
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// If it's a file request (.js, .css, .ico, etc.) that doesn't exist, return 404
+		if strings.Contains(cleanPath, ".") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Fallback for any other path: redirect to root
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	})
 
 	url := fmt.Sprintf("http://%s:%d", *host, *port)
 	if *host == "0.0.0.0" {
