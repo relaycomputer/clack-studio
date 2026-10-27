@@ -76,10 +76,13 @@ The browser will automatically open at `http://127.0.0.1:8080`.
 
 ---
 
-## 👥 Authors & Credits
+## 👥 Engineering Team & Contacts
 
-* **Peter Prikasky** — Physical Relay Computer Architecture, Schematics & Hardware Construction ([relaiscomputer.at](https://relaiscomputer.at))
-* **Christian Buchhas** — Software Architecture, Simulator & Emulator, IDE, Web Audio Engine & Compiler ([relaycomputer.org](https://relaycomputer.org))
+| Domain | Lead Engineer | Contact |
+| :--- | :--- | :--- |
+| **Hardware Architecture & Discrete Relays** | **Peter Prikasky** ([relaiscomputer.at](https://relaiscomputer.at)) | `hardware@relaycomputer.org` |
+| **Software, Compiler & Simulation** | **Christian Buchhas** ([relaycomputer.org](https://relaycomputer.org)) | `software@relaycomputer.org` |
+| **General Inquiries & Community** | **The Relay Computer Project** | `contact@relaycomputer.org` |
 
 ---
 
