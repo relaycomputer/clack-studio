@@ -82,6 +82,7 @@ The browser will automatically open at `http://127.0.0.1:8080`.
 | :--- | :--- | :--- |
 | **Hardware Architecture & Discrete Relays** | **Peter Prikasky** ([relaiscomputer.at](https://relaiscomputer.at)) | `hardware@relaycomputer.org` |
 | **Software, Compiler & Simulation** | **Christian Buchhas** ([relaycomputer.org](https://relaycomputer.org)) | `software@relaycomputer.org` |
+| **Public Community Chat (Matrix)** | **The Relay Computer Project** | [`#relaycomputer:matrix.org`](https://matrix.to/#/#relaycomputer:matrix.org) |
 | **General Inquiries & Community** | **The Relay Computer Project** | `contact@relaycomputer.org` |
 
 ---
